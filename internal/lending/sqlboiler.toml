@@ -1,0 +1,14 @@
+pkgname = "models"
+output = "adapters/models"
+wipe = true
+no-tests = false
+add-enum-types = true
+add-soft-deletes = true
+
+[psql]
+host = "localhost"
+dbname = "lending"
+user = "postgres"
+pass = "changeme"
+sslmode = "disable"
+blacklist = ["schema_migrations"]
