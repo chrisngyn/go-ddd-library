@@ -11,14 +11,6 @@ var (
 	ErrBookNotFound   = commonErrors.NewIncorrectInputError("book-not-found", "book not found")
 )
 
-type PatronRepository interface {
-	Update(
-		ctx context.Context,
-		patronID PatronID,
-		updateFn func(ctx context.Context, patron *Patron) error,
-	) error
-}
-
 type BookRepository interface {
 	Update(
 		ctx context.Context,

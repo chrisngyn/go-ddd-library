@@ -4,7 +4,7 @@ import (
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
 )
 
-type HoldPolicy func(book BookInformation, patron *Patron, duration HoldDuration) error
+type HoldPolicy func(book Information, patron *Patron, duration HoldDuration) error
 
 var (
 	holdPolices = []HoldPolicy{
@@ -20,7 +20,7 @@ var ErrRegularPatronCannotHoldRestrictedBook = commonErrors.NewIncorrectInputErr
 	"regular patron cannot hold restricted book",
 )
 
-func onlyResearcherPatronsCanHoldRestrictedBooksPolicy(book BookInformation, patron *Patron, duration HoldDuration) error {
+func onlyResearcherPatronsCanHoldRestrictedBooksPolicy(book Information, patron *Patron, _ HoldDuration) error {
 	if book.IsRestricted() && patron.isRegular() {
 		return ErrRegularPatronCannotHoldRestrictedBook
 	}
@@ -34,7 +34,7 @@ var ErrMaxCountOfOverdueCheckoutsReached = commonErrors.NewIncorrectInputError(
 	"max count of overdue checkout reached",
 )
 
-func overdueCheckoutsRejectionPolicy(book BookInformation, patron *Patron, duration HoldDuration) error {
+func overdueCheckoutsRejectionPolicy(book Information, patron *Patron, _ HoldDuration) error {
 	if patron.overdueCheckoutsAt(book.PlacedAt) > maxCountOfOverdueCheckouts {
 		return ErrMaxCountOfOverdueCheckoutsReached
 	}
@@ -48,7 +48,7 @@ var ErrMaxHoldsReached = commonErrors.NewIncorrectInputError(
 	"patron cannot hold more books",
 )
 
-func regularPatronMaximumNumberOfHoldsPolicy(book BookInformation, patron *Patron, duration HoldDuration) error {
+func regularPatronMaximumNumberOfHoldsPolicy(_ Information, patron *Patron, _ HoldDuration) error {
 	if patron.isRegular() && patron.numberOfHolds() > maxNumberOfHolds {
 		return ErrMaxHoldsReached
 	}
@@ -60,7 +60,7 @@ var ErrOnlyResearcherCanPlaceOpenEndedHold = commonErrors.NewIncorrectInputError
 	"only researcher can place open ended hold",
 )
 
-func onlyResearcherPatronsCanPlaceOpenEndedHoldsPolicy(book BookInformation, patron *Patron, duration HoldDuration) error {
+func onlyResearcherPatronsCanPlaceOpenEndedHoldsPolicy(_ Information, patron *Patron, duration HoldDuration) error {
 	if patron.isRegular() && duration.IsOpenEnded() {
 		return ErrOnlyResearcherCanPlaceOpenEndedHold
 	}

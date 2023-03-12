@@ -1,6 +1,6 @@
 package domain
 
-func (p *Patron) PlaceOnHold(book BookInformation, duration HoldDuration) error {
+func (p *Patron) PlaceOnHold(book Information, duration HoldDuration) error {
 	if err := p.canHold(book, duration); err != nil {
 		return err
 	}
@@ -14,7 +14,7 @@ func (p *Patron) PlaceOnHold(book BookInformation, duration HoldDuration) error 
 	return nil
 }
 
-func (p *Patron) canHold(book BookInformation, duration HoldDuration) error {
+func (p *Patron) canHold(book Information, duration HoldDuration) error {
 	for _, policy := range holdPolices {
 		if err := policy(book, p, duration); err != nil {
 			return err

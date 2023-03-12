@@ -13,6 +13,13 @@ type ReturnBookHandler struct {
 	bookRepository domain.BookRepository
 }
 
+func NewReturnBookHandler(bookRepo domain.BookRepository) ReturnBookHandler {
+	if bookRepo == nil {
+		panic("missing bookRepo")
+	}
+	return ReturnBookHandler{bookRepository: bookRepo}
+}
+
 func (h ReturnBookHandler) Handle(ctx context.Context, cmd ReturnBookCommand) error {
 	if err := cmd.validate(); err != nil {
 		return errors.Wrap(err, "validate input")

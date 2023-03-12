@@ -11,6 +11,14 @@ type HoldDuration struct {
 	till time.Time
 }
 
+func (d HoldDuration) From() time.Time {
+	return d.from
+}
+
+func (d HoldDuration) Till() time.Time {
+	return d.till
+}
+
 func (d HoldDuration) IsZero() bool {
 	return d == HoldDuration{}
 }
@@ -23,11 +31,24 @@ func NewHoldDuration(from time.Time, numOfDays int) (HoldDuration, error) {
 		return HoldDuration{}, commonErrors.NewIncorrectInputError("invalid-num-of-days", "invalid-num-of-days")
 	}
 
-	holdDuration := HoldDuration{from: from}
+	var till time.Time
 	if numOfDays > 0 {
-		holdDuration.till = from.AddDate(0, 0, numOfDays)
+		till = from.AddDate(0, 0, numOfDays)
 	}
-	return holdDuration, nil
+	return NewHoldDurationFromTill(from, till)
+}
+
+func NewHoldDurationFromTill(from time.Time, till time.Time) (HoldDuration, error) {
+	if from.IsZero() {
+		return HoldDuration{}, commonErrors.NewIncorrectInputError("missing-from", "missing from")
+	}
+	if !till.IsZero() && till.Before(from) {
+		return HoldDuration{}, commonErrors.NewIncorrectInputError("invalid-till", "till must after from")
+	}
+	return HoldDuration{
+		from: from,
+		till: till,
+	}, nil
 }
 
 func (d HoldDuration) IsOpenEnded() bool {

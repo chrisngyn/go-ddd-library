@@ -14,6 +14,13 @@ type CheckoutHandler struct {
 	patronBookRepository domain.PatronBookRepository
 }
 
+func NewCheckoutHandler(patronBookRepo domain.PatronBookRepository) CheckoutHandler {
+	if patronBookRepo == nil {
+		panic("missing patronBookRepo")
+	}
+	return CheckoutHandler{patronBookRepository: patronBookRepo}
+}
+
 func (h CheckoutHandler) Handle(ctx context.Context, cmd CheckoutCommand) error {
 	if err := cmd.validate(); err != nil {
 		return errors.Wrap(err, "validate input")

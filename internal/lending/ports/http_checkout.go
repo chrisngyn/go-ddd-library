@@ -13,7 +13,7 @@ import (
 
 func (h HttpServer) Checkout(w http.ResponseWriter, r *http.Request, patronId string) {
 	var req CheckoutJSONRequestBody
-	if err := render.Decode(r, req); err != nil {
+	if err := render.Decode(r, &req); err != nil {
 		httperr.BadRequest("decode-fail", err, w, r)
 		return
 	}

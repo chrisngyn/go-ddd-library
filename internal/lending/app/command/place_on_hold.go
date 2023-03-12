@@ -13,13 +13,20 @@ type PlaceOnHoldHandler struct {
 	patronBookRepository domain.PatronBookRepository
 }
 
+func NewPlaceOnHoldHandler(patronBookRepo domain.PatronBookRepository) PlaceOnHoldHandler {
+	if patronBookRepo == nil {
+		panic("missing patronBookRepo")
+	}
+	return PlaceOnHoldHandler{patronBookRepository: patronBookRepo}
+}
+
 func (h PlaceOnHoldHandler) Handle(ctx context.Context, cmd PlaceOnHoldCommand) error {
 	if err := cmd.validate(); err != nil {
 		return errors.Wrap(err, "validate")
 	}
 
 	if err := h.patronBookRepository.Update(ctx, cmd.PatronID, cmd.BookID, func(ctx context.Context, patron *domain.Patron, book *domain.Book) error {
-		if err := patron.PlaceOnHold(book.BookInformation(), cmd.HoldDuration); err != nil {
+		if err := patron.PlaceOnHold(book.BookInfo(), cmd.HoldDuration); err != nil {
 			return errors.Wrap(err, "patron place on hold")
 		}
 

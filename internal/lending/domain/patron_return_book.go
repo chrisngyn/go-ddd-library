@@ -1,16 +1,7 @@
 package domain
 
-import (
-	"github.com/pkg/errors"
-)
-
 func (p *Patron) ReturnBook(bookID BookID) error {
-	if err := p.removeHold(bookID); err != nil {
-		return errors.Wrap(err, "remove hold")
-	}
-
 	p.removeOverdueCheckoutIfExist(bookID)
-
 	return nil
 }
 
