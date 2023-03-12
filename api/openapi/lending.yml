@@ -18,6 +18,38 @@ security:
   - bearerAuth: [ ]
 
 paths:
+  /patrons/{patronId}/profile:
+    get:
+      operationId: getPatronProfile
+      description: get patron profile
+      tags:
+        - Patron
+      parameters:
+        - in: path
+          name: patronId
+          schema:
+            type: string
+            minimum: 0
+          required: true
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                title: GetPatronProfileResponse
+                allOf:
+                  - $ref: "#/components/schemas/BaseResponse"
+                  - type: object
+                    required: [ data ]
+                    properties:
+                      data:
+                        type: object
+                        required: [ patronProfile ]
+                        properties:
+                          patronProfile:
+                            $ref: "#/components/schemas/PatronProfile"
+
   /patrons/{patronId}/holds:
     post:
       operationId: placeHold
@@ -156,3 +188,84 @@ components:
       required:
         - code
         - message
+
+    PatronProfile:
+      type: object
+      properties:
+        patronId:
+          type: string
+        patronType:
+          $ref: "#/components/schemas/PatronType"
+        holds:
+          type: array
+          items:
+            $ref: "#/components/schemas/Hold"
+        checkedOuts:
+          type: array
+          items:
+            $ref: "#/components/schemas/CheckedOut"
+        overdueCheckouts:
+          type: array
+          items:
+            $ref: "#/components/schemas/OverdueCheckout"
+      required:
+        - patronId
+        - patronType
+        - holds
+        - checkedOuts
+        - overdueCheckouts
+
+    PatronType:
+      type: string
+      nullable: false
+      enum:
+        - Regular
+        - Researcher
+
+    Hold:
+      type: object
+      properties:
+        bookId:
+          type: string
+        libraryBranchId:
+          type: string
+        from:
+          type: string
+          format: date-time
+        till:
+          type: string
+          format: date-time
+        isOpenEnded:
+          type: boolean
+      required:
+        - bookId
+        - libraryBranchId
+        - from
+        - till
+        - isOpenEnded
+
+    CheckedOut:
+      type: object
+      properties:
+        bookId:
+          type: string
+        libraryBranchId:
+          type: string
+        checkedOutAt:
+          type: string
+          format: date-time
+      required:
+        - bookId
+        - libraryBranchId
+        - checkedOutAt
+
+    OverdueCheckout:
+      type: object
+      properties:
+        bookId:
+          type: string
+        libraryBranchId:
+          type: string
+      required:
+        - bookId
+        - libraryBranchId

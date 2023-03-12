@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/chiennguyen196/go-library/internal/lending/app/command"
+	"github.com/chiennguyen196/go-library/internal/lending/app/query"
 )
 
 type Application struct {
@@ -17,4 +18,5 @@ type Commands struct {
 }
 
 type Queries struct {
+	PatronProfile query.PatronProfileHandler
 }
