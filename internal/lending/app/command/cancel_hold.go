@@ -10,14 +10,14 @@ import (
 )
 
 type CancelHoldHandler struct {
-	patronBookRepository domain.PatronBookRepository
+	patronRepository domain.PatronRepository
 }
 
-func NewCancelHoldHandler(patronBookRepo domain.PatronBookRepository) CancelHoldHandler {
-	if patronBookRepo == nil {
-		panic("missing patronBookRepo")
+func NewCancelHoldHandler(patronRepo domain.PatronRepository) CancelHoldHandler {
+	if patronRepo == nil {
+		panic("missing patronRepo")
 	}
-	return CancelHoldHandler{patronBookRepository: patronBookRepo}
+	return CancelHoldHandler{patronRepository: patronRepo}
 }
 
 func (h CancelHoldHandler) Handle(ctx context.Context, cmd CancelHoldCommand) error {
@@ -25,7 +25,7 @@ func (h CancelHoldHandler) Handle(ctx context.Context, cmd CancelHoldCommand) er
 		return errors.Wrap(err, "validate input")
 	}
 
-	if err := h.patronBookRepository.Update(ctx, cmd.PatronID, cmd.BookID, func(ctx context.Context, patron *domain.Patron, book *domain.Book) error {
+	if err := h.patronRepository.UpdateWithBook(ctx, cmd.PatronID, cmd.BookID, func(ctx context.Context, patron *domain.Patron, book *domain.Book) error {
 		if err := patron.CancelHold(cmd.BookID); err != nil {
 			return errors.Wrap(err, "patron cancel hold")
 		}

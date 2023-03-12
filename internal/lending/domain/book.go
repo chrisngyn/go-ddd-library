@@ -34,7 +34,7 @@ var (
 )
 
 type Book struct {
-	info   Information
+	info   BookInformation
 	status BookStatus
 
 	holdInfo       HoldInformation
@@ -45,7 +45,7 @@ func (b *Book) ID() BookID {
 	return b.info.BookID
 }
 
-func (b *Book) BookInfo() Information {
+func (b *Book) BookInfo() BookInformation {
 	return b.info
 }
 
@@ -71,8 +71,8 @@ func (b *Book) BookCheckedOutInfo() CheckedOutInformation {
 	return b.checkedOutInfo
 }
 
-func NewAvailableBook(information Information) (Book, error) {
-	if information == (Information{}) {
+func NewAvailableBook(information BookInformation) (Book, error) {
+	if information == (BookInformation{}) {
 		return Book{}, commonErrors.NewIncorrectInputError("missing-information", "missing book information")
 	}
 	return Book{
@@ -81,8 +81,8 @@ func NewAvailableBook(information Information) (Book, error) {
 	}, nil
 }
 
-func NewBookOnHold(information Information, holdInformation HoldInformation) (Book, error) {
-	if information == (Information{}) {
+func NewBookOnHold(information BookInformation, holdInformation HoldInformation) (Book, error) {
+	if information == (BookInformation{}) {
 		return Book{}, commonErrors.NewIncorrectInputError("missing-information", "missing book information")
 	}
 	if holdInformation == (HoldInformation{}) {
@@ -95,8 +95,8 @@ func NewBookOnHold(information Information, holdInformation HoldInformation) (Bo
 	}, nil
 }
 
-func NewCheckedOutBook(information Information, checkedOutInformation CheckedOutInformation) (Book, error) {
-	if information == (Information{}) {
+func NewCheckedOutBook(information BookInformation, checkedOutInformation CheckedOutInformation) (Book, error) {
+	if information == (BookInformation{}) {
 		return Book{}, commonErrors.NewIncorrectInputError("missing-information", "missing book information")
 	}
 	if checkedOutInformation == (CheckedOutInformation{}) {
@@ -109,30 +109,30 @@ func NewCheckedOutBook(information Information, checkedOutInformation CheckedOut
 	}, nil
 }
 
-type Information struct {
+type BookInformation struct {
 	BookID   BookID
 	BookType BookType
 	PlacedAt LibraryBranchID
 }
 
-func NewBookInformation(bookID BookID, bookType BookType, placedAt LibraryBranchID) (Information, error) {
+func NewBookInformation(bookID BookID, bookType BookType, placedAt LibraryBranchID) (BookInformation, error) {
 	if bookID.IsZero() {
-		return Information{}, commonErrors.NewIncorrectInputError("missing-book-id", "missing book id")
+		return BookInformation{}, commonErrors.NewIncorrectInputError("missing-book-id", "missing book id")
 	}
 	if bookType.IsZero() {
-		return Information{}, commonErrors.NewIncorrectInputError("missing-book-type", "missing book type")
+		return BookInformation{}, commonErrors.NewIncorrectInputError("missing-book-type", "missing book type")
 	}
 	if placedAt.IsZero() {
-		return Information{}, commonErrors.NewIncorrectInputError("missing-placed-at", "missing placed at")
+		return BookInformation{}, commonErrors.NewIncorrectInputError("missing-placed-at", "missing placed at")
 	}
-	return Information{
+	return BookInformation{
 		BookID:   bookID,
 		BookType: bookType,
 		PlacedAt: placedAt,
 	}, nil
 }
 
-func (b Information) IsRestricted() bool {
+func (b BookInformation) IsRestricted() bool {
 	return b.BookType == BookTypeRestricted
 }
 

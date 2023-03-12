@@ -13,18 +13,18 @@ import (
 	"github.com/chiennguyen196/go-library/internal/lending/domain"
 )
 
-type PostgresPatronBookRepository struct {
+type PostgresPatronRepository struct {
 	db *sql.DB
 }
 
-func NewPostgresPatronBookRepository(db *sql.DB) PostgresPatronBookRepository {
+func NewPostgresPatronRepository(db *sql.DB) PostgresPatronRepository {
 	if db == nil {
 		panic("missing db")
 	}
-	return PostgresPatronBookRepository{db: db}
+	return PostgresPatronRepository{db: db}
 }
 
-func (r PostgresPatronBookRepository) Update(ctx context.Context, patronID domain.PatronID, bookID domain.BookID, updateFn func(ctx context.Context, patron *domain.Patron, book *domain.Book) error) error {
+func (r PostgresPatronRepository) UpdateWithBook(ctx context.Context, patronID domain.PatronID, bookID domain.BookID, updateFn func(ctx context.Context, patron *domain.Patron, book *domain.Book) error) error {
 	return WithTx(ctx, r.db, func(tx *sql.Tx) error {
 		patron, err := getPatronByID(ctx, tx, patronID, true)
 		if err != nil {
@@ -50,7 +50,7 @@ func (r PostgresPatronBookRepository) Update(ctx context.Context, patronID domai
 	})
 }
 
-func (r PostgresPatronBookRepository) GetPatronProfile(ctx context.Context, patronID domain.PatronID) (p query.PatronProfile, err error) {
+func (r PostgresPatronRepository) GetPatronProfile(ctx context.Context, patronID domain.PatronID) (p query.PatronProfile, err error) {
 	patron, err := models.Patrons(
 		models.PatronWhere.ID.EQ(string(patronID)),
 		qm.Load(models.PatronRels.Holds),

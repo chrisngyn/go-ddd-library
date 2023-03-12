@@ -11,18 +11,18 @@ import (
 func NewApplication() app.Application {
 	db := database.NewSqlDB()
 
-	patronBookRepo := adapters.NewPostgresPatronBookRepository(db)
+	patronRepo := adapters.NewPostgresPatronRepository(db)
 	bookRepo := adapters.NewPostgresBookRepository(db)
 
 	return app.Application{
 		Commands: app.Commands{
-			PlaceOnHold: command.NewPlaceOnHoldHandler(patronBookRepo),
-			CancelHold:  command.NewCancelHoldHandler(patronBookRepo),
-			CheckOut:    command.NewCheckoutHandler(patronBookRepo),
+			PlaceOnHold: command.NewPlaceOnHoldHandler(patronRepo),
+			CancelHold:  command.NewCancelHoldHandler(patronRepo),
+			CheckOut:    command.NewCheckoutHandler(patronRepo),
 			ReturnBook:  command.NewReturnBookHandler(bookRepo),
 		},
 		Queries: app.Queries{
-			PatronProfile: query.NewPatronProfileHandler(patronBookRepo),
+			PatronProfile: query.NewPatronProfileHandler(patronRepo),
 		},
 	}
 }

@@ -11,21 +11,21 @@ import (
 )
 
 type CheckoutHandler struct {
-	patronBookRepository domain.PatronBookRepository
+	patronRepository domain.PatronRepository
 }
 
-func NewCheckoutHandler(patronBookRepo domain.PatronBookRepository) CheckoutHandler {
-	if patronBookRepo == nil {
-		panic("missing patronBookRepo")
+func NewCheckoutHandler(patronRepo domain.PatronRepository) CheckoutHandler {
+	if patronRepo == nil {
+		panic("missing patronRepo")
 	}
-	return CheckoutHandler{patronBookRepository: patronBookRepo}
+	return CheckoutHandler{patronRepository: patronRepo}
 }
 
 func (h CheckoutHandler) Handle(ctx context.Context, cmd CheckoutCommand) error {
 	if err := cmd.validate(); err != nil {
 		return errors.Wrap(err, "validate input")
 	}
-	if err := h.patronBookRepository.Update(ctx, cmd.PatronID, cmd.BookID, func(ctx context.Context, patron *domain.Patron, book *domain.Book) error {
+	if err := h.patronRepository.UpdateWithBook(ctx, cmd.PatronID, cmd.BookID, func(ctx context.Context, patron *domain.Patron, book *domain.Book) error {
 		if err := patron.Checkout(cmd.BookID); err != nil {
 			return errors.Wrap(err, "patron checkout")
 		}
