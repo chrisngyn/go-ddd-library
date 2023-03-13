@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -10,6 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/chiennguyen196/go-library/internal/common/logs"
+	"github.com/chiennguyen196/go-library/internal/lending/app"
 	"github.com/chiennguyen196/go-library/internal/lending/ports"
 	"github.com/chiennguyen196/go-library/internal/lending/service"
 )
@@ -17,11 +21,21 @@ import (
 func main() {
 	logs.Init()
 
+	severToRun := strings.ToLower(os.Args[1])
+
 	anApp := service.NewApplication()
 
-	RunHTTPServer(func(router chi.Router) http.Handler {
-		return ports.HandlerFromMux(ports.NewHttpServer(anApp), router)
-	})
+	switch severToRun {
+	case "http":
+		RunHTTPServer(func(router chi.Router) http.Handler {
+			return ports.HandlerFromMux(ports.NewHttpServer(anApp), router)
+		})
+	case "job":
+		jobName := strings.ToLower(os.Args[2])
+		RunJob(jobName, anApp)
+	default:
+		panic(fmt.Sprintf("Not support serverToRun=%s", severToRun))
+	}
 }
 
 func RunHTTPServer(createHandler func(router chi.Router) http.Handler) {
@@ -67,4 +81,14 @@ func setMiddlewares(router *chi.Mux) {
 		middleware.SetHeader("X-Frame-Options", "deny"),
 	)
 	router.Use(middleware.NoCache)
+}
+
+func RunJob(jobName string, anApp app.Application) {
+	job := ports.NewJob(anApp)
+	switch jobName {
+	case "daily-cancel-expired-holds":
+		job.CancelExpiredHolds(time.Now())
+	default:
+		panic(fmt.Sprintf("Not support job=%s", jobName))
+	}
 }

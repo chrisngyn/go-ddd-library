@@ -21,6 +21,14 @@ type CheckedOut struct {
 }
 
 type OverdueCheckout struct {
+	PatronID        domain.PatronID
 	BookID          string
 	LibraryBranchID string
+}
+
+type ExpiredHold struct {
+	BookID          domain.BookID
+	LibraryBranchID domain.LibraryBranchID
+	PatronID        domain.PatronID
+	HoldTill        time.Time
 }

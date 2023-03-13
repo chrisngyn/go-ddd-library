@@ -24,7 +24,7 @@ type PatronProfileReadModel interface {
 	GetPatronProfile(ctx context.Context, patronID domain.PatronID) (PatronProfile, error)
 }
 
-func (h PatronProfileHandler) Handle(ctx context.Context, query GetPatronProfileQuery) (p PatronProfile, err error) {
+func (h PatronProfileHandler) Handle(ctx context.Context, query PatronProfileQuery) (p PatronProfile, err error) {
 	if err := query.validate(); err != nil {
 		return p, errors.Wrap(err, "validate query")
 	}
@@ -32,11 +32,11 @@ func (h PatronProfileHandler) Handle(ctx context.Context, query GetPatronProfile
 	return h.readModel.GetPatronProfile(ctx, query.PatronID)
 }
 
-type GetPatronProfileQuery struct {
+type PatronProfileQuery struct {
 	PatronID domain.PatronID
 }
 
-func (q GetPatronProfileQuery) validate() error {
+func (q PatronProfileQuery) validate() error {
 	if q.PatronID.IsZero() {
 		return commonErrors.NewIncorrectInputError("missing-patron-id", "missing patron id")
 	}

@@ -94,6 +94,7 @@ func toQueryPatronProfile(patron *models.Patron, checkedOutBooks models.BookSlic
 	queryOverdueCheckouts := make([]query.OverdueCheckout, 0, len(patron.R.OverdueCheckouts))
 	for _, c := range patron.R.OverdueCheckouts {
 		queryOverdueCheckouts = append(queryOverdueCheckouts, query.OverdueCheckout{
+			PatronID:        domain.PatronID(patron.ID),
 			BookID:          c.BookID,
 			LibraryBranchID: c.LibraryBranchID,
 		})

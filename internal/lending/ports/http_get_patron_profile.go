@@ -9,7 +9,7 @@ import (
 )
 
 func (h HttpServer) GetPatronProfile(w http.ResponseWriter, r *http.Request, patronId string) {
-	q := query.GetPatronProfileQuery{PatronID: domain.PatronID(patronId)}
+	q := query.PatronProfileQuery{PatronID: domain.PatronID(patronId)}
 
 	profile, err := h.app.Queries.PatronProfile.Handle(r.Context(), q)
 	if err != nil {

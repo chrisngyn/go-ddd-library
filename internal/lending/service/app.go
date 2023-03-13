@@ -23,6 +23,7 @@ func NewApplication() app.Application {
 		},
 		Queries: app.Queries{
 			PatronProfile: query.NewPatronProfileHandler(patronRepo),
+			ExpiredHolds:  query.NewExpiredHoldsHandler(bookRepo),
 		},
 	}
 }

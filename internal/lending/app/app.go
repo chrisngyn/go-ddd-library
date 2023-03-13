@@ -19,4 +19,5 @@ type Commands struct {
 
 type Queries struct {
 	PatronProfile query.PatronProfileHandler
+	ExpiredHolds  query.ExpiredHoldsHandler
 }
