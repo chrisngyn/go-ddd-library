@@ -4,30 +4,30 @@ import (
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
 )
 
-type PatronType struct {
-	s string
-}
-
-func (t PatronType) IsZero() bool {
-	return t == PatronType{}
-}
-
-var (
-	PatronTypeRegular    = PatronType{"Regular"}
-	PatronTypeResearcher = PatronType{"Researcher"}
-)
-
-type PatronID string
-
-func (i PatronID) IsZero() bool {
-	return i == ""
-}
-
 type Patron struct {
 	id               PatronID
 	patronType       PatronType
 	holds            []Hold
 	overdueCheckouts map[LibraryBranchID][]BookID
+}
+
+func NewPatron(id PatronID, patronType PatronType, holds []Hold, overdueCheckouts map[LibraryBranchID][]BookID) (Patron, error) {
+	if id.IsZero() {
+		return Patron{}, commonErrors.NewIncorrectInputError("missing-patron-id", "missing patron id")
+	}
+	if patronType.IsZero() {
+		return Patron{}, commonErrors.NewIncorrectInputError("missing-patron-type", "missing patron type")
+	}
+
+	if overdueCheckouts == nil {
+		overdueCheckouts = make(map[LibraryBranchID][]BookID)
+	}
+	return Patron{
+		id:               id,
+		patronType:       patronType,
+		holds:            holds,
+		overdueCheckouts: overdueCheckouts,
+	}, nil
 }
 
 func (p *Patron) ID() PatronID {
@@ -50,17 +50,14 @@ func (p *Patron) IsZero() bool {
 	return p.id.IsZero()
 }
 
-func NewPatron(id PatronID, patronType PatronType, holds []Hold, overdueCheckouts map[LibraryBranchID][]BookID) (Patron, error) {
-	if id.IsZero() {
-		return Patron{}, commonErrors.NewIncorrectInputError("missing-patron-id", "missing patron id")
-	}
-	if patronType.IsZero() {
-		return Patron{}, commonErrors.NewIncorrectInputError("missing-patron-type", "missing patron type")
-	}
-	return Patron{
-		id:               id,
-		patronType:       patronType,
-		holds:            holds,
-		overdueCheckouts: overdueCheckouts,
-	}, nil
+func (p *Patron) isRegular() bool {
+	return p.patronType == PatronTypeRegular
+}
+
+func (p *Patron) overdueCheckoutsAt(libraryBranchID LibraryBranchID) int {
+	return len(p.overdueCheckouts[libraryBranchID])
+}
+
+func (p *Patron) numberOfHolds() int {
+	return len(p.holds)
 }

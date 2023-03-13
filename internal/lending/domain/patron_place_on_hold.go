@@ -1,5 +1,9 @@
 package domain
 
+import (
+	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
+)
+
 func (p *Patron) PlaceOnHold(book BookInformation, duration HoldDuration) error {
 	if err := p.canHold(book, duration); err != nil {
 		return err
@@ -23,14 +27,65 @@ func (p *Patron) canHold(book BookInformation, duration HoldDuration) error {
 	return nil
 }
 
-func (p *Patron) isRegular() bool {
-	return p.patronType == PatronTypeRegular
+type HoldPolicy func(book BookInformation, patron *Patron, duration HoldDuration) error
+
+var (
+	holdPolices = []HoldPolicy{
+		onlyResearcherPatronsCanHoldRestrictedBooksPolicy,
+		overdueCheckoutsRejectionPolicy,
+		regularPatronMaximumNumberOfHoldsPolicy,
+		onlyResearcherPatronsCanPlaceOpenEndedHoldsPolicy,
+	}
+)
+
+var ErrRegularPatronCannotHoldRestrictedBook = commonErrors.NewIncorrectInputError(
+	"regular-patron-cannot-hold-restricted-book",
+	"regular patron cannot hold restricted book",
+)
+
+func onlyResearcherPatronsCanHoldRestrictedBooksPolicy(book BookInformation, patron *Patron, _ HoldDuration) error {
+	if book.IsRestricted() && patron.isRegular() {
+		return ErrRegularPatronCannotHoldRestrictedBook
+	}
+	return nil
 }
 
-func (p *Patron) overdueCheckoutsAt(libraryBranchID LibraryBranchID) int {
-	return len(p.overdueCheckouts[libraryBranchID])
+const maxCountOfOverdueCheckouts = 2
+
+var ErrMaxCountOfOverdueCheckoutsReached = commonErrors.NewIncorrectInputError(
+	"max-count-of-overdue-checkouts-reached",
+	"max count of overdue checkout reached",
+)
+
+func overdueCheckoutsRejectionPolicy(book BookInformation, patron *Patron, _ HoldDuration) error {
+	if patron.overdueCheckoutsAt(book.PlacedAt) >= maxCountOfOverdueCheckouts {
+		return ErrMaxCountOfOverdueCheckoutsReached
+	}
+	return nil
 }
 
-func (p *Patron) numberOfHolds() int {
-	return len(p.holds)
+const maxNumberOfHolds = 5
+
+var ErrMaxHoldsReached = commonErrors.NewIncorrectInputError(
+	"max-holds-reached",
+	"patron cannot hold more books",
+)
+
+func regularPatronMaximumNumberOfHoldsPolicy(_ BookInformation, patron *Patron, _ HoldDuration) error {
+	if patron.isRegular() && patron.numberOfHolds() >= maxNumberOfHolds {
+		return ErrMaxHoldsReached
+	}
+	return nil
+}
+
+var ErrOnlyResearcherCanPlaceOpenEndedHold = commonErrors.NewIncorrectInputError(
+	"only-researcher-can-place-open-ended-hold",
+	"only researcher can place open ended hold",
+)
+
+func onlyResearcherPatronsCanPlaceOpenEndedHoldsPolicy(_ BookInformation, patron *Patron, duration HoldDuration) error {
+	if patron.isRegular() && duration.IsOpenEnded() {
+		return ErrOnlyResearcherCanPlaceOpenEndedHold
+	}
+	return nil
 }

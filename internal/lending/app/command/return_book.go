@@ -30,9 +30,7 @@ func (h ReturnBookHandler) Handle(ctx context.Context, cmd ReturnBookCommand) er
 			return errors.Wrap(err, "check in book")
 		}
 
-		if err := patron.ReturnBook(cmd.BookID); err != nil {
-			return errors.Wrap(err, "patron return book")
-		}
+		patron.ReturnBook(cmd.BookID)
 
 		return nil
 	}); err != nil {

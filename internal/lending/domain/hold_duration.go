@@ -28,7 +28,7 @@ func NewHoldDuration(from time.Time, numOfDays int) (HoldDuration, error) {
 		return HoldDuration{}, commonErrors.NewIncorrectInputError("missing-from", "missing from")
 	}
 	if numOfDays < 0 {
-		return HoldDuration{}, commonErrors.NewIncorrectInputError("invalid-num-of-days", "invalid-num-of-days")
+		return HoldDuration{}, commonErrors.NewIncorrectInputError("invalid-num-of-days", "numOfDays must great than 0")
 	}
 
 	var till time.Time

@@ -1,36 +1,7 @@
 package domain
 
 import (
-	"time"
-
-	"github.com/pkg/errors"
-
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
-)
-
-type BookID string
-
-func (i BookID) IsZero() bool {
-	return i == ""
-}
-
-type LibraryBranchID string
-
-func (i LibraryBranchID) IsZero() bool {
-	return i == ""
-}
-
-type BookType struct {
-	s string
-}
-
-func (t BookType) IsZero() bool {
-	return t == BookType{}
-}
-
-var (
-	BookTypeRestricted  = BookType{"Restricted"}
-	BookTypeCirculating = BookType{"Circulating"}
 )
 
 type Book struct {
@@ -39,36 +10,6 @@ type Book struct {
 
 	holdInfo       HoldInformation
 	checkedOutInfo CheckedOutInformation
-}
-
-func (b *Book) ID() BookID {
-	return b.info.BookID
-}
-
-func (b *Book) BookInfo() BookInformation {
-	return b.info
-}
-
-func (b *Book) Status() BookStatus {
-	return b.status
-}
-
-func (b *Book) ByPatronID() PatronID {
-	if b.status == BookStatusOnHold {
-		return b.holdInfo.ByPatron
-	}
-	if b.status == BookStatusCheckedOut {
-		return b.checkedOutInfo.ByPatron
-	}
-	return ""
-}
-
-func (b *Book) BookHoldInfo() HoldInformation {
-	return b.holdInfo
-}
-
-func (b *Book) BookCheckedOutInfo() CheckedOutInformation {
-	return b.checkedOutInfo
 }
 
 func NewAvailableBook(information BookInformation) (Book, error) {
@@ -109,106 +50,32 @@ func NewCheckedOutBook(information BookInformation, checkedOutInformation Checke
 	}, nil
 }
 
-type BookInformation struct {
-	BookID   BookID
-	BookType BookType
-	PlacedAt LibraryBranchID
+func (b *Book) ID() BookID {
+	return b.info.BookID
 }
 
-func NewBookInformation(bookID BookID, bookType BookType, placedAt LibraryBranchID) (BookInformation, error) {
-	if bookID.IsZero() {
-		return BookInformation{}, commonErrors.NewIncorrectInputError("missing-book-id", "missing book id")
-	}
-	if bookType.IsZero() {
-		return BookInformation{}, commonErrors.NewIncorrectInputError("missing-book-type", "missing book type")
-	}
-	if placedAt.IsZero() {
-		return BookInformation{}, commonErrors.NewIncorrectInputError("missing-placed-at", "missing placed at")
-	}
-	return BookInformation{
-		BookID:   bookID,
-		BookType: bookType,
-		PlacedAt: placedAt,
-	}, nil
+func (b *Book) BookInfo() BookInformation {
+	return b.info
 }
 
-func (b BookInformation) IsRestricted() bool {
-	return b.BookType == BookTypeRestricted
+func (b *Book) Status() BookStatus {
+	return b.status
 }
 
-type HoldInformation struct {
-	ByPatron PatronID
-	Till     time.Time
+func (b *Book) ByPatronID() PatronID {
+	if b.status == BookStatusOnHold {
+		return b.holdInfo.ByPatron
+	}
+	if b.status == BookStatusCheckedOut {
+		return b.checkedOutInfo.ByPatron
+	}
+	return ""
 }
 
-type CheckedOutInformation struct {
-	ByPatron PatronID
-	At       time.Time
+func (b *Book) BookHoldInfo() HoldInformation {
+	return b.holdInfo
 }
 
-var (
-	ErrBookNotAvailable = commonErrors.NewIncorrectInputError("book-not-available", "book not available")
-)
-
-func (b *Book) HoldBy(patronID PatronID, holdDuration HoldDuration) error {
-	if b.status != BookStatusAvailable {
-		return ErrBookNotAvailable
-	}
-
-	b.holdInfo = HoldInformation{
-		ByPatron: patronID,
-		Till:     holdDuration.till,
-	}
-	b.status = BookStatusOnHold
-	return nil
-}
-
-func (b *Book) CancelHold() error {
-	if b.status != BookStatusOnHold {
-		return ErrBookNotOnHold
-	}
-
-	b.holdInfo = HoldInformation{}
-	b.status = BookStatusAvailable
-
-	return nil
-}
-
-var (
-	ErrBookNotOnHold       = commonErrors.NewIncorrectInputError("book-not-on-hold", "book not on hold")
-	ErrBookNotHoldByPatron = commonErrors.NewIncorrectInputError("book-not-hold-by-patron", "book not hold by patron")
-)
-
-func (b *Book) Checkout(patronID PatronID, at time.Time) error {
-	if b.status != BookStatusOnHold {
-		return ErrBookNotOnHold
-	}
-
-	if b.holdInfo.ByPatron != patronID {
-		return errors.Wrapf(ErrBookNotHoldByPatron, "checkoutBy=%s holdBy=%s", patronID, b.holdInfo.ByPatron)
-	}
-
-	b.status = BookStatusCheckedOut
-	b.holdInfo = HoldInformation{}
-	b.checkedOutInfo = CheckedOutInformation{
-		ByPatron: patronID,
-		At:       at,
-	}
-
-	return nil
-}
-
-var (
-	ErrBookNotCheckedOut = commonErrors.NewIncorrectInputError("book-not-checked-out", "book not checked out")
-)
-
-func (b *Book) CheckIn() error {
-	if b.status != BookStatusCheckedOut {
-		return ErrBookNotCheckedOut
-	}
-
-	b.checkedOutInfo = CheckedOutInformation{}
-	b.status = BookStatusAvailable
-
-	return nil
+func (b *Book) BookCheckedOutInfo() CheckedOutInformation {
+	return b.checkedOutInfo
 }

@@ -1,8 +1,7 @@
 package domain
 
-func (p *Patron) ReturnBook(bookID BookID) error {
+func (p *Patron) ReturnBook(bookID BookID) {
 	p.removeOverdueCheckoutIfExist(bookID)
-	return nil
 }
 
 func (p *Patron) removeOverdueCheckoutIfExist(bookID BookID) {
@@ -26,6 +25,10 @@ func (p *Patron) removeOverdueCheckoutIfExist(bookID BookID) {
 
 	overdueCheckouts := p.overdueCheckouts[foundLibraryBranchID]
 	overdueCheckouts = append(overdueCheckouts[:bookIdx], overdueCheckouts[bookIdx+1:]...)
+
+	if len(overdueCheckouts) == 0 {
+		delete(p.overdueCheckouts, foundLibraryBranchID)
+	}
 
 	p.overdueCheckouts[foundLibraryBranchID] = overdueCheckouts
 }
