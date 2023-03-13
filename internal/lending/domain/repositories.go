@@ -12,6 +12,11 @@ var (
 )
 
 type PatronRepository interface {
+	Update(
+		ctx context.Context,
+		patronID PatronID,
+		updateFn func(ctx context.Context, patron *Patron) error,
+	) error
 	UpdateWithBook(
 		ctx context.Context,
 		patronID PatronID,

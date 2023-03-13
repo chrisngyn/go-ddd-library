@@ -72,7 +72,7 @@ func toResponseOverdueCheckouts(overdueCheckouts []query.OverdueCheckout) []Over
 	result := make([]OverdueCheckout, 0, len(overdueCheckouts))
 	for _, c := range overdueCheckouts {
 		result = append(result, OverdueCheckout{
-			BookId:          c.BookID,
+			BookId:          string(c.BookID),
 			LibraryBranchId: c.LibraryBranchID,
 		})
 	}

@@ -11,13 +11,15 @@ type Application struct {
 }
 
 type Commands struct {
-	PlaceOnHold command.PlaceOnHoldHandler
-	CancelHold  command.CancelHoldHandler
-	CheckOut    command.CheckoutHandler
-	ReturnBook  command.ReturnBookHandler
+	PlaceOnHold         command.PlaceOnHoldHandler
+	CancelHold          command.CancelHoldHandler
+	CheckOut            command.CheckoutHandler
+	ReturnBook          command.ReturnBookHandler
+	MarkOverdueCheckout command.MarkOverdueCheckoutHandler
 }
 
 type Queries struct {
-	PatronProfile query.PatronProfileHandler
-	ExpiredHolds  query.ExpiredHoldsHandler
+	PatronProfile    query.PatronProfileHandler
+	ExpiredHolds     query.ExpiredHoldsHandler
+	OverdueCheckouts query.OverdueCheckoutsHandler
 }

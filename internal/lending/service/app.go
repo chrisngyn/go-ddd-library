@@ -16,14 +16,16 @@ func NewApplication() app.Application {
 
 	return app.Application{
 		Commands: app.Commands{
-			PlaceOnHold: command.NewPlaceOnHoldHandler(patronRepo),
-			CancelHold:  command.NewCancelHoldHandler(patronRepo),
-			CheckOut:    command.NewCheckoutHandler(patronRepo),
-			ReturnBook:  command.NewReturnBookHandler(bookRepo),
+			PlaceOnHold:         command.NewPlaceOnHoldHandler(patronRepo),
+			CancelHold:          command.NewCancelHoldHandler(patronRepo),
+			CheckOut:            command.NewCheckoutHandler(patronRepo),
+			ReturnBook:          command.NewReturnBookHandler(bookRepo),
+			MarkOverdueCheckout: command.NewMarkOverdueCheckoutHandler(patronRepo),
 		},
 		Queries: app.Queries{
-			PatronProfile: query.NewPatronProfileHandler(patronRepo),
-			ExpiredHolds:  query.NewExpiredHoldsHandler(bookRepo),
+			PatronProfile:    query.NewPatronProfileHandler(patronRepo),
+			ExpiredHolds:     query.NewExpiredHoldsHandler(bookRepo),
+			OverdueCheckouts: query.NewOverdueCheckoutsHandler(bookRepo),
 		},
 	}
 }

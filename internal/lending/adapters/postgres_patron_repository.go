@@ -24,6 +24,23 @@ func NewPostgresPatronRepository(db *sql.DB) PostgresPatronRepository {
 	return PostgresPatronRepository{db: db}
 }
 
+func (r PostgresPatronRepository) Update(ctx context.Context, patronID domain.PatronID, updateFn func(ctx context.Context, patron *domain.Patron) error) error {
+	return WithTx(ctx, r.db, func(tx *sql.Tx) error {
+		patron, err := getPatronByID(ctx, tx, patronID, true)
+		if err != nil {
+			return errors.Wrap(err, "get patron")
+		}
+
+		if err := updateFn(ctx, &patron); err != nil {
+			return err
+		}
+		if err := updatePatron(ctx, tx, patron); err != nil {
+			return errors.Wrap(err, "update patron")
+		}
+		return nil
+	})
+}
+
 func (r PostgresPatronRepository) UpdateWithBook(ctx context.Context, patronID domain.PatronID, bookID domain.BookID, updateFn func(ctx context.Context, patron *domain.Patron, book *domain.Book) error) error {
 	return WithTx(ctx, r.db, func(tx *sql.Tx) error {
 		patron, err := getPatronByID(ctx, tx, patronID, true)

@@ -90,3 +90,23 @@ func (r PostgresBookRepository) ListExpiredHolds(ctx context.Context, at time.Ti
 	}
 	return result, nil
 }
+
+func (r PostgresBookRepository) ListOverdueCheckouts(ctx context.Context, at time.Time, maxCheckoutDurationDays int) ([]query.OverdueCheckout, error) {
+	books, err := models.Books(
+		models.BookWhere.BookStatus.EQ(models.BookStatusCheckedOut),
+		models.BookWhere.CheckedOutAt.LTE(null.TimeFrom(at.AddDate(0, 0, -maxCheckoutDurationDays))),
+	).All(ctx, r.db)
+	if err != nil {
+		return nil, errors.Wrap(err, "list overdue checkout books")
+	}
+
+	result := make([]query.OverdueCheckout, 0, len(books))
+	for _, b := range books {
+		result = append(result, query.OverdueCheckout{
+			PatronID:        domain.PatronID(b.PatronID.String),
+			BookID:          b.ID,
+			LibraryBranchID: b.LibraryBranchID,
+		})
+	}
+	return result, nil
+}

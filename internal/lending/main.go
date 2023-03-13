@@ -88,6 +88,8 @@ func RunJob(jobName string, anApp app.Application) {
 	switch jobName {
 	case "daily-cancel-expired-holds":
 		job.CancelExpiredHolds(time.Now())
+	case "daily-mark-overdue-checkouts":
+		job.MarkOverdueCheckouts(time.Now())
 	default:
 		panic(fmt.Sprintf("Not support job=%s", jobName))
 	}

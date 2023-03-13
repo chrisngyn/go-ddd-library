@@ -11,6 +11,7 @@ import (
 )
 
 func (j Job) CancelExpiredHolds(at time.Time) {
+	start := time.Now()
 	ctx := context.Background()
 	expiredHolds, err := j.app.Queries.ExpiredHolds.Handle(ctx, query.ExpiredHoldsQuery{At: at})
 	if err != nil {
@@ -28,4 +29,5 @@ func (j Job) CancelExpiredHolds(at time.Time) {
 				Msg("Cancel hold fail")
 		}
 	}
+	log.Info().Dur("elapsed", time.Since(start)).Msg("Done!")
 }

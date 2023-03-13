@@ -14,7 +14,7 @@ func TestPatron_MarkOverdueCheckout(t *testing.T) {
 		patron := newExamplePatron(t, domain.PatronTypeRegular, nil, nil)
 		bookInfo := newExampleBookInformation(t, domain.BookTypeCirculating)
 
-		patron.MarkOverdueCheckout(bookInfo)
+		patron.MarkOverdueCheckout(bookInfo.BookID, bookInfo.PlacedAt)
 
 		overdueCheckouts := patron.OverdueCheckouts()
 		assert.Len(t, overdueCheckouts[bookInfo.PlacedAt], 1)
