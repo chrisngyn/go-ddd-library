@@ -184,3 +184,47 @@ func addExpiredHoldBook(t *testing.T, db *sql.DB) *models.Book {
 	}
 	return book
 }
+
+func TestPostgresBookRepository_ListOverdueCheckouts(t *testing.T) {
+	db := database.NewSqlDB()
+	t.Cleanup(func() {
+		_ = db.Close()
+	})
+	ctx := context.Background()
+	tests.TruncateTables(t, db, models.TableNames.Books)
+
+	repo := adapters.NewPostgresBookRepository(db)
+	dbBook := addOverdueCheckoutBook(t, db)
+	expectOverdueCheckouts := []query.OverdueCheckout{
+		{
+			PatronID:        domain.PatronID(dbBook.PatronID.String),
+			BookID:          dbBook.ID,
+			LibraryBranchID: dbBook.LibraryBranchID,
+		},
+	}
+
+	actual, err := repo.ListOverdueCheckouts(ctx, time.Now(), 10)
+	require.NoError(t, err)
+
+	assert.ElementsMatch(t, expectOverdueCheckouts, actual)
+}
+
+func addOverdueCheckoutBook(t *testing.T, db *sql.DB) *models.Book {
+	t.Helper()
+	book := &models.Book{
+		ID:              uuid.NewString(),
+		LibraryBranchID: uuid.NewString(),
+		BookType:        models.BookTypeCirculating,
+		BookStatus:      models.BookStatusCheckedOut,
+		PatronID:        null.StringFrom(uuid.NewString()),
+		CheckedOutAt:    null.TimeFrom(time.Now().AddDate(0, 0, -70)), // just a day so far
+	}
+	err := book.Insert(context.Background(), db, boil.Infer())
+	if err != nil {
+		t.Fatalf("Cannot create a expried book: %v", err)
+	}
+	if err := book.Reload(context.Background(), db); err != nil {
+		t.Fatalf("Cannot reload expried book: %v", err)
+	}
+	return book
+}
