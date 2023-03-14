@@ -8,7 +8,8 @@ openapi-http:
 
 .PHONY: migrate-up
 migrate-up:
-	@./scripts/migrate-up.sh lending
+	@./scripts/migrate-up.sh lending lending
+	@./scripts/migrate-up.sh lending_test lending
 
 
 .PHONY: sqlboiler

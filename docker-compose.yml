@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_USERNAME: ${POSTGRES_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      POSTGRES_MULTIPLE_DATABASES: lending,catalogue
+      POSTGRES_MULTIPLE_DATABASES: lending,catalogue,lending_test,catalogue_test
       PGDATA: /data/postgres
     volumes:
       - ./db_data:/data/postgres
