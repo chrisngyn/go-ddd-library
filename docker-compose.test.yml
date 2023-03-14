@@ -1,0 +1,18 @@
+version: '3.5'
+
+services:
+  postgres-test:
+    image: postgres:15.2
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USERNAME: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_MULTIPLE_DATABASES: lending,catalogue
+      PGDATA: /data/postgres
+    volumes:
+      - ./migrations/init:/docker-entrypoint-initdb.d
+
+networks:
+  be_network:
+    driver: bridge
