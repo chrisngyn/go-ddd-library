@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -68,11 +69,19 @@ func assertPersistedBookEquals(t *testing.T, repo adapters.PostgresBookRepositor
 	persistedBook, err := repo.Get(context.Background(), book.ID())
 	require.NoError(t, err)
 
-	assert.EqualValues(t, book.ID(), persistedBook.ID())
-	assert.EqualValues(t, book.Status(), persistedBook.Status())
-	assert.EqualValues(t, book.BookInfo(), persistedBook.BookInfo())
-	assert.EqualValues(t, book.BookHoldInfo().ByPatron, persistedBook.BookHoldInfo().ByPatron)
-	assert.EqualValues(t, book.BookHoldInfo().Till.Unix(), persistedBook.BookHoldInfo().Till.Unix())
-	assert.EqualValues(t, book.BookCheckedOutInfo().ByPatron, persistedBook.BookCheckedOutInfo().ByPatron)
-	assert.EqualValues(t, book.BookCheckedOutInfo().At.Unix(), persistedBook.BookCheckedOutInfo().At.Unix())
+	cmpOpts := []cmp.Option{
+		cmp.AllowUnexported(
+			time.Time{},
+			domain.BookType{},
+			domain.BookStatus{},
+			domain.Book{},
+		),
+	}
+
+	assert.True(
+		t,
+		cmp.Equal(book, &persistedBook, cmpOpts...),
+		cmp.Diff(book, &persistedBook, cmpOpts...),
+	)
+
 }

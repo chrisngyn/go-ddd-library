@@ -6,7 +6,9 @@ import (
 	"context"
 	"database/sql"
 	"testing"
+	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -59,8 +61,52 @@ func assertPersistedPatronEquals(t *testing.T, repo adapters.PostgresPatronRepos
 	persistedPatron, err := repo.Get(context.Background(), patron.ID())
 	require.NoError(t, err)
 
-	assert.EqualValues(t, patron.ID(), persistedPatron.ID())
-	assert.EqualValues(t, patron.PatronType(), persistedPatron.PatronType())
-	assert.EqualValues(t, patron.Holds(), persistedPatron.Holds())
-	assert.EqualValues(t, patron.OverdueCheckouts(), persistedPatron.OverdueCheckouts())
+	cmpOpts := []cmp.Option{
+		cmp.AllowUnexported(
+			time.Time{},
+			domain.PatronType{},
+			domain.Patron{},
+			domain.Hold{},
+			domain.HoldDuration{},
+		),
+	}
+
+	assert.True(
+		t,
+		cmp.Equal(patron, &persistedPatron, cmpOpts...),
+		cmp.Diff(patron, &persistedPatron, cmpOpts...),
+	)
+}
+
+func TestPostgresPatronRepository_UpdateWithBook(t *testing.T) {
+	db := database.NewSqlDB()
+	t.Cleanup(func() {
+		_ = db.Close()
+	})
+
+	repo := adapters.NewPostgresPatronRepository(db)
+	dbPatron := addExamplePatron(t, db)
+	dbBook := addExampleAvailableBook(t, db)
+
+	var updatedPatron *domain.Patron
+	var updatedBook *domain.Book
+
+	err := repo.UpdateWithBook(context.Background(), domain.PatronID(dbPatron.ID), domain.BookID(dbBook.ID), func(ctx context.Context, patron *domain.Patron, book *domain.Book) error {
+		holdDuration, err := domain.NewHoldDuration(time.Now(), 5)
+		require.NoError(t, err)
+
+		err = patron.PlaceOnHold(book.BookInfo(), holdDuration)
+		require.NoError(t, err)
+
+		err = book.HoldBy(patron.ID(), holdDuration)
+		require.NoError(t, err)
+
+		updatedPatron = patron
+		updatedBook = book
+		return nil
+	})
+	require.NoError(t, err)
+
+	assertPersistedPatronEquals(t, repo, updatedPatron)
+	assertPersistedBookEquals(t, adapters.NewPostgresBookRepository(db), updatedBook)
 }
