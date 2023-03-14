@@ -12,11 +12,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/chiennguyen196/go-library/internal/common/database"
+	"github.com/chiennguyen196/go-library/internal/common/tests"
 	"github.com/chiennguyen196/go-library/internal/lending/adapters"
 	"github.com/chiennguyen196/go-library/internal/lending/adapters/models"
+	"github.com/chiennguyen196/go-library/internal/lending/app/query"
 	"github.com/chiennguyen196/go-library/internal/lending/domain"
 )
 
@@ -133,4 +136,51 @@ func TestPostgresBookRepository_UpdateWithPatron(t *testing.T) {
 
 	assertPersistedBookEquals(t, repo, updatedBook)
 	assertPersistedPatronEquals(t, patronRepo, updatedPatron)
+}
+
+func TestPostgresBookRepository_ListExpiredHolds(t *testing.T) {
+	db := database.NewSqlDB()
+	t.Cleanup(func() {
+		_ = db.Close()
+	})
+	ctx := context.Background()
+	tests.TruncateTables(t, db, models.TableNames.Books)
+
+	repo := adapters.NewPostgresBookRepository(db)
+	dbBook := addExpiredHoldBook(t, db)
+
+	expectedQueryExpiredHolds := []query.ExpiredHold{
+		{
+			BookID:          domain.BookID(dbBook.ID),
+			LibraryBranchID: domain.LibraryBranchID(dbBook.LibraryBranchID),
+			PatronID:        domain.PatronID(dbBook.PatronID.String),
+			HoldTill:        dbBook.HoldTill.Time,
+		},
+	}
+
+	actual, err := repo.ListExpiredHolds(ctx, time.Now())
+	require.NoError(t, err)
+
+	assert.ElementsMatch(t, expectedQueryExpiredHolds, actual)
+
+}
+
+func addExpiredHoldBook(t *testing.T, db *sql.DB) *models.Book {
+	t.Helper()
+	book := &models.Book{
+		ID:              uuid.NewString(),
+		LibraryBranchID: uuid.NewString(),
+		BookType:        models.BookTypeCirculating,
+		BookStatus:      models.BookStatusOnHold,
+		PatronID:        null.StringFrom(uuid.NewString()),
+		HoldTill:        null.TimeFrom(time.Now().AddDate(0, 0, -1)),
+	}
+	err := book.Insert(context.Background(), db, boil.Infer())
+	if err != nil {
+		t.Fatalf("Cannot create a expried book: %v", err)
+	}
+	if err := book.Reload(context.Background(), db); err != nil {
+		t.Fatalf("Cannot reload expried book: %v", err)
+	}
+	return book
 }
