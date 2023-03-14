@@ -26,6 +26,10 @@ func NewPostgresBookRepository(db *sql.DB) PostgresBookRepository {
 	}
 }
 
+func (r PostgresBookRepository) Get(ctx context.Context, bookID domain.BookID) (domain.Book, error) {
+	return getBookByID(ctx, r.db, bookID, false)
+}
+
 func (r PostgresBookRepository) Update(ctx context.Context, bookID domain.BookID, updateFn func(ctx context.Context, book *domain.Book) error) error {
 	return WithTx(ctx, r.db, func(tx *sql.Tx) error {
 		book, err := getBookByID(ctx, tx, bookID, true)
