@@ -6,9 +6,9 @@ CREATE TABLE patrons
 (
     id          VARCHAR(255) PRIMARY KEY,
     patron_type patron_type NOT NULL,
-    created_at  timestamp   NOT NULL DEFAULT current_timestamp,
-    updated_at  timestamp   NOT NULL DEFAULT current_timestamp,
-    deleted_at  timestamp            DEFAULT NULL
+    created_at  timestamptz   NOT NULL DEFAULT current_timestamp,
+    updated_at  timestamptz   NOT NULL DEFAULT current_timestamp,
+    deleted_at  timestamptz            DEFAULT NULL
 );
 
 CREATE TABLE books
@@ -18,11 +18,11 @@ CREATE TABLE books
     book_type         book_type   NOT NULL,
     book_status       book_status NOT NULL,
     patron_id         VARCHAR(255),
-    hold_till         timestamp,
-    checked_out_at    timestamp,
-    created_at        timestamp   NOT NULL DEFAULT current_timestamp,
-    updated_at        timestamp   NOT NULL DEFAULT current_timestamp,
-    deleted_at        timestamp            DEFAULT NULL
+    hold_till         timestamptz,
+    checked_out_at    timestamptz,
+    created_at        timestamptz   NOT NULL DEFAULT current_timestamp,
+    updated_at        timestamptz   NOT NULL DEFAULT current_timestamp,
+    deleted_at        timestamptz            DEFAULT NULL
 );
 
 CREATE TABLE holds
@@ -31,11 +31,11 @@ CREATE TABLE holds
     patron_id         VARCHAR(255) NOT NULL,
     book_id           uuid         NOT NULL,
     library_branch_id uuid         NOT NULL,
-    hold_from         timestamp    NOT NULL,
-    hold_till         timestamp,
-    created_at        timestamp    NOT NULL DEFAULT current_timestamp,
-    updated_at        timestamp    NOT NULL DEFAULT current_timestamp,
-    deleted_at        timestamp             DEFAULT NULL,
+    hold_from         timestamptz    NOT NULL,
+    hold_till         timestamptz,
+    created_at        timestamptz    NOT NULL DEFAULT current_timestamp,
+    updated_at        timestamptz    NOT NULL DEFAULT current_timestamp,
+    deleted_at        timestamptz             DEFAULT NULL,
     CONSTRAINT fk_holds_patrons FOREIGN KEY (patron_id) REFERENCES patrons (id),
     CONSTRAINT uq_holds_patron_id_book_id UNIQUE (patron_id, book_id)
 );
@@ -46,9 +46,9 @@ CREATE TABLE overdue_checkouts
     patron_id         VARCHAR(255) NOT NULL,
     book_id           uuid         NOT NULL,
     library_branch_id uuid         NOT NULL,
-    created_at        timestamp    NOT NULL DEFAULT current_timestamp,
-    updated_at        timestamp    NOT NULL DEFAULT current_timestamp,
-    deleted_at        timestamp             DEFAULT NULL,
+    created_at        timestamptz    NOT NULL DEFAULT current_timestamp,
+    updated_at        timestamptz    NOT NULL DEFAULT current_timestamp,
+    deleted_at        timestamptz             DEFAULT NULL,
     CONSTRAINT fk_overdue_checkouts_patrons FOREIGN KEY (patron_id) REFERENCES patrons(id),
     CONSTRAINT uq_overdue_checkouts_patron_id_book_id UNIQUE (patron_id, book_id)
 );
