@@ -8,10 +8,11 @@ services:
     environment:
       POSTGRES_USERNAME: ${POSTGRES_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_MULTIPLE_DATABASES: lending,catalogue
       PGDATA: /data/postgres
     volumes:
       - ./db_data:/data/postgres
+      - ./migrations/init:/docker-entrypoint-initdb.d
 
 networks:
   be_network:
