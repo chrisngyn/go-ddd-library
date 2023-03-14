@@ -8,13 +8,13 @@ import (
 	"github.com/chiennguyen196/go-library/internal/lending/app/query"
 )
 
-func NewApplication() app.Application {
+func NewApplication() (app.Application, func()) {
 	db := database.NewSqlDB()
 
 	patronRepo := adapters.NewPostgresPatronRepository(db)
 	bookRepo := adapters.NewPostgresBookRepository(db)
 
-	return app.Application{
+	anApp := app.Application{
 		Commands: app.Commands{
 			PlaceOnHold:         command.NewPlaceOnHoldHandler(patronRepo),
 			CancelHold:          command.NewCancelHoldHandler(patronRepo),
@@ -27,5 +27,9 @@ func NewApplication() app.Application {
 			ExpiredHolds:     query.NewExpiredHoldsHandler(bookRepo),
 			OverdueCheckouts: query.NewOverdueCheckoutsHandler(bookRepo),
 		},
+	}
+
+	return anApp, func() {
+		_ = db.Close()
 	}
 }
