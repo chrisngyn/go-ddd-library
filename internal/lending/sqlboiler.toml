@@ -1,7 +1,7 @@
 pkgname = "models"
 output = "adapters/models"
 wipe = true
-no-tests = false
+no-tests = true
 add-enum-types = true
 add-soft-deletes = true
 

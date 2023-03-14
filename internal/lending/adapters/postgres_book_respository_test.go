@@ -85,3 +85,52 @@ func assertPersistedBookEquals(t *testing.T, repo adapters.PostgresBookRepositor
 	)
 
 }
+
+func TestPostgresBookRepository_UpdateWithPatron(t *testing.T) {
+	db := database.NewSqlDB()
+	t.Cleanup(func() {
+		_ = db.Close()
+	})
+	ctx := context.Background()
+
+	repo := adapters.NewPostgresBookRepository(db)
+	patronRepo := adapters.NewPostgresPatronRepository(db)
+
+	dbPatron := addExamplePatron(t, db)
+	dbBook := addExampleAvailableBook(t, db)
+
+	// Patron hold a book
+	err := patronRepo.UpdateWithBook(ctx, domain.PatronID(dbPatron.ID), domain.BookID(dbBook.ID), func(ctx context.Context, patron *domain.Patron, book *domain.Book) error {
+		holdDuration, err := domain.NewHoldDuration(time.Now(), 5)
+		require.NoError(t, err)
+
+		err = patron.PlaceOnHold(book.BookInfo(), holdDuration)
+		require.NoError(t, err)
+
+		err = book.HoldBy(patron.ID(), holdDuration)
+		require.NoError(t, err)
+
+		return nil
+	})
+	require.NoError(t, err)
+
+	// Patron checkout book
+	var updatedPatron *domain.Patron
+	var updatedBook *domain.Book
+	err = repo.UpdateWithPatron(ctx, domain.BookID(dbBook.ID), func(ctx context.Context, book *domain.Book, patron *domain.Patron) error {
+		err := book.Checkout(patron.ID(), time.Now())
+		require.NoError(t, err)
+
+		err = patron.Checkout(book.ID())
+		require.NoError(t, err)
+
+		updatedPatron = patron
+		updatedBook = book
+
+		return nil
+	})
+	require.NoError(t, err)
+
+	assertPersistedBookEquals(t, repo, updatedBook)
+	assertPersistedPatronEquals(t, patronRepo, updatedPatron)
+}
