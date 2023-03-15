@@ -1,0 +1,112 @@
+openapi: "3.0.2"
+info:
+  title: Catalogue Service
+  version: "1.0"
+servers:
+  - url: http://{hostname}/api/v1
+    description: Local server
+    variables:
+      hostname:
+        default: localhost:8081
+  - url: https://{hostname}/api/v1
+    description: Secure HTTP Server
+    variables:
+      hostname:
+        default: localhost
+
+security:
+  - bearerAuth: [ ]
+
+paths:
+  /books:
+    post:
+      operationId: createABook
+      description: create a new book
+      tags:
+        - Book
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              title: CreateABookRequest
+              properties:
+                isbn:
+                  type: string
+                title:
+                  type: string
+                author:
+                  type: string
+              required:
+                - isbn
+                - title
+                - author
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaseResponse"
+  /books/{isbn}/instances:
+    post:
+      operationId: createABookInstance
+      description: create a book instance
+      tags:
+        - Book Instance
+      parameters:
+        - in: path
+          name: isbn
+          schema:
+            type: string
+            minimum: 0
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              title: CreateABookInstanceRequest
+              properties:
+                placedAt:
+                  type: string
+                bookType:
+                  $ref: "#/components/schemas/BookType"
+              required:
+                - placedAt
+                - bookType
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaseResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    BaseResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+
+    BookType:
+      type: string
+      nullable: false
+      enum:
+        - Restricted
+        - Circulating
+

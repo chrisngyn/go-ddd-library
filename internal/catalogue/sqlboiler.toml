@@ -1,0 +1,14 @@
+pkgname = "models"
+output = "models"
+wipe = true
+no-tests = true
+add-enum-types = true
+add-soft-deletes = true
+
+[psql]
+host = "localhost"
+dbname = "catalogue"
+user = "postgres"
+pass = "changeme"
+sslmode = "disable"
+blacklist = ["schema_migrations"]
