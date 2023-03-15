@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
+	"github.com/chiennguyen196/go-library/internal/common/monitoring"
 )
 
 const (
@@ -28,7 +29,11 @@ type OverdueCheckoutsReadModel interface {
 	ListOverdueCheckouts(ctx context.Context, at time.Time, maxCheckoutDurationDays int) ([]OverdueCheckout, error)
 }
 
-func (h OverdueCheckoutsHandler) Handle(ctx context.Context, query OverdueCheckoutsQuery) ([]OverdueCheckout, error) {
+func (h OverdueCheckoutsHandler) Handle(ctx context.Context, query OverdueCheckoutsQuery) (result []OverdueCheckout, err error) {
+	defer func(st time.Time) {
+		monitoring.MonitorQuery(ctx, "OverdueCheckouts", query, result, err, st)
+	}(time.Now())
+
 	if err := query.validate(); err != nil {
 		return nil, errors.Wrap(err, "validate")
 	}

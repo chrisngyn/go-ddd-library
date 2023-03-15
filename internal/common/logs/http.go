@@ -9,16 +9,16 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func NewStructuredLogger(logger zerolog.Logger) func(next http.Handler) http.Handler {
-	return middleware.RequestLogger(&StructuredLogger{logger})
+func NewHTTPStructuredLogger(logger zerolog.Logger) func(next http.Handler) http.Handler {
+	return middleware.RequestLogger(&HTTPStructuredLogger{logger})
 }
 
-// StructuredLogger based on example from chi: https://github.com/go-chi/chi/blob/master/_examples/logging/main.go
-type StructuredLogger struct {
+// HTTPStructuredLogger based on example from chi: https://github.com/go-chi/chi/blob/master/_examples/logging/main.go
+type HTTPStructuredLogger struct {
 	Logger zerolog.Logger
 }
 
-func (l *StructuredLogger) NewLogEntry(r *http.Request) middleware.LogEntry {
+func (l *HTTPStructuredLogger) NewLogEntry(r *http.Request) middleware.LogEntry {
 	logger := l.Logger.With().
 		Str("req_id", middleware.GetReqID(r.Context())).
 		Logger()

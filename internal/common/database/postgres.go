@@ -7,6 +7,9 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog/log"
+	sqldblogger "github.com/simukti/sqldb-logger"
+
+	"github.com/chiennguyen196/go-library/internal/common/logs"
 )
 
 func NewSqlDB() *sql.DB {
@@ -22,6 +25,8 @@ func NewSqlDB() *sql.DB {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Cannot connect to DB")
 	}
+
+	db = sqldblogger.OpenDriver(psqlConn, db.Driver(), logs.NewSQLLogAdapter())
 
 	return db
 }

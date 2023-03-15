@@ -2,10 +2,12 @@ package command
 
 import (
 	"context"
+	"time"
 
 	"github.com/pkg/errors"
 
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
+	"github.com/chiennguyen196/go-library/internal/common/monitoring"
 	"github.com/chiennguyen196/go-library/internal/lending/domain"
 )
 
@@ -20,7 +22,11 @@ func NewCancelHoldHandler(patronRepo domain.PatronRepository) CancelHoldHandler 
 	return CancelHoldHandler{patronRepository: patronRepo}
 }
 
-func (h CancelHoldHandler) Handle(ctx context.Context, cmd CancelHoldCommand) error {
+func (h CancelHoldHandler) Handle(ctx context.Context, cmd CancelHoldCommand) (err error) {
+	defer func(st time.Time) {
+		monitoring.MonitorCommand(ctx, "CancelHold", cmd, err, st)
+	}(time.Now())
+
 	if err := cmd.validate(); err != nil {
 		return errors.Wrap(err, "validate input")
 	}

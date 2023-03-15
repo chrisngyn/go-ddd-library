@@ -2,10 +2,12 @@ package query
 
 import (
 	"context"
+	"time"
 
 	"github.com/pkg/errors"
 
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
+	"github.com/chiennguyen196/go-library/internal/common/monitoring"
 	"github.com/chiennguyen196/go-library/internal/lending/domain"
 )
 
@@ -25,6 +27,10 @@ type PatronProfileReadModel interface {
 }
 
 func (h PatronProfileHandler) Handle(ctx context.Context, query PatronProfileQuery) (p PatronProfile, err error) {
+	defer func(st time.Time) {
+		monitoring.MonitorQuery(ctx, "PatronProfile", query, p, err, st)
+	}(time.Now())
+
 	if err := query.validate(); err != nil {
 		return p, errors.Wrap(err, "validate query")
 	}

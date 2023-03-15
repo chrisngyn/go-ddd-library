@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
+	"github.com/chiennguyen196/go-library/internal/common/monitoring"
 	"github.com/chiennguyen196/go-library/internal/lending/domain"
 )
 
@@ -21,7 +22,11 @@ func NewCheckoutHandler(patronRepo domain.PatronRepository) CheckoutHandler {
 	return CheckoutHandler{patronRepository: patronRepo}
 }
 
-func (h CheckoutHandler) Handle(ctx context.Context, cmd CheckoutCommand) error {
+func (h CheckoutHandler) Handle(ctx context.Context, cmd CheckoutCommand) (err error) {
+	defer func(st time.Time) {
+		monitoring.MonitorCommand(ctx, "Checkout", cmd, err, st)
+	}(time.Now())
+
 	if err := cmd.validate(); err != nil {
 		return errors.Wrap(err, "validate input")
 	}

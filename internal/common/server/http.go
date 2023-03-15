@@ -46,7 +46,7 @@ func writeOK(writer http.ResponseWriter, _ *http.Request) {
 func setMiddlewares(router *chi.Mux) {
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
-	router.Use(logs.NewStructuredLogger(log.Logger))
+	router.Use(logs.NewHTTPStructuredLogger(log.Logger))
 	router.Use(middleware.Recoverer)
 
 	router.Use(cors.AllowAll().Handler)

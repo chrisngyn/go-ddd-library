@@ -2,10 +2,12 @@ package command
 
 import (
 	"context"
+	"time"
 
 	"github.com/pkg/errors"
 
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
+	"github.com/chiennguyen196/go-library/internal/common/monitoring"
 	"github.com/chiennguyen196/go-library/internal/lending/domain"
 )
 
@@ -20,7 +22,11 @@ func NewMarkOverdueCheckoutHandler(patronRepo domain.PatronRepository) MarkOverd
 	return MarkOverdueCheckoutHandler{patronRepo: patronRepo}
 }
 
-func (h MarkOverdueCheckoutHandler) Handle(ctx context.Context, cmd MarkOverdueCheckoutCommand) error {
+func (h MarkOverdueCheckoutHandler) Handle(ctx context.Context, cmd MarkOverdueCheckoutCommand) (err error) {
+	defer func(st time.Time) {
+		monitoring.MonitorCommand(ctx, "MarkOverdueCheckout", cmd, err, st)
+	}(time.Now())
+
 	if err := cmd.validate(); err != nil {
 		return errors.Wrap(err, "validate")
 	}
