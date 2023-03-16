@@ -53,13 +53,13 @@ func (h HttpServer) CreateABookInstance(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	bookInstance, err := NewBookInstance(uuid.NewString(), isbn, req.PlacedAt, req.BookType)
+	bookInstance, event, err := NewBookInstance(uuid.NewString(), isbn, req.PlacedAt, req.BookType)
 	if err != nil {
 		httperr.RespondWithSlugError(err, w, r)
 		return
 	}
 
-	if err := h.db.AddABookInstance(r.Context(), bookInstance); err != nil {
+	if err := h.db.AddABookInstance(r.Context(), bookInstance, event); err != nil {
 		httperr.RespondWithSlugError(err, w, r)
 		return
 	}

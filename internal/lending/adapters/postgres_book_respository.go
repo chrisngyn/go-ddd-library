@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"
 
+	"github.com/chiennguyen196/go-library/internal/common/database"
 	"github.com/chiennguyen196/go-library/internal/lending/adapters/models"
 	"github.com/chiennguyen196/go-library/internal/lending/app/query"
 	"github.com/chiennguyen196/go-library/internal/lending/domain"
@@ -31,7 +32,7 @@ func (r PostgresBookRepository) Get(ctx context.Context, bookID domain.BookID) (
 }
 
 func (r PostgresBookRepository) Update(ctx context.Context, bookID domain.BookID, updateFn func(ctx context.Context, book *domain.Book) error) error {
-	return WithTx(ctx, r.db, func(tx *sql.Tx) error {
+	return database.WithTx(ctx, r.db, func(tx *sql.Tx) error {
 		book, err := getBookByID(ctx, tx, bookID, true)
 		if err != nil {
 			return errors.Wrap(err, "get book by id")
@@ -50,7 +51,7 @@ func (r PostgresBookRepository) Update(ctx context.Context, bookID domain.BookID
 }
 
 func (r PostgresBookRepository) UpdateWithPatron(ctx context.Context, bookID domain.BookID, updateFn func(ctx context.Context, book *domain.Book, patron *domain.Patron) error) error {
-	return WithTx(ctx, r.db, func(tx *sql.Tx) error {
+	return database.WithTx(ctx, r.db, func(tx *sql.Tx) error {
 		book, err := getBookByID(ctx, tx, bookID, true)
 		if err != nil {
 			return errors.Wrap(err, "get book by id")

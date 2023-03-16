@@ -3,10 +3,17 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 
+	"github.com/ThreeDotsLabs/watermill"
+	watermillSQL "github.com/ThreeDotsLabs/watermill-sql/pkg/sql"
+	"github.com/ThreeDotsLabs/watermill/components/forwarder"
+	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/pkg/errors"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/chiennguyen196/go-library/internal/catalogue/models"
+	"github.com/chiennguyen196/go-library/internal/common/database"
 )
 
 type DB struct {
@@ -33,12 +40,51 @@ func (d DB) Exists(ctx context.Context, isbn string) (bool, error) {
 	return models.Books(models.BookWhere.Isbn.EQ(isbn)).Exists(ctx, d.db)
 }
 
-func (d DB) AddABookInstance(ctx context.Context, instance BookInstance) error {
+func (d DB) AddABookInstance(ctx context.Context, instance BookInstance, event BookInstanceAdded) error {
 	i := models.BookInstance{
 		BookID:          instance.bookID,
 		BookIsbn:        instance.bookIsbn,
 		LibraryBranchID: instance.libraryBranchID,
 		BookType:        instance.bookType,
 	}
-	return i.Insert(ctx, d.db, boil.Infer())
+	return database.WithTx(ctx, d.db, func(tx *sql.Tx) error {
+		if err := i.Insert(ctx, d.db, boil.Infer()); err != nil {
+			return errors.Wrap(err, "insert book instance")
+		}
+
+		if err := publishEvents(tx, event); err != nil {
+			return errors.Wrap(err, "publish event")
+		}
+		return nil
+	})
+}
+
+func publishEvents(tx *sql.Tx, events ...interface{}) error {
+	var publisher message.Publisher
+	publisher, err := watermillSQL.NewPublisher(
+		tx,
+		watermillSQL.PublisherConfig{
+			SchemaAdapter: watermillSQL.DefaultPostgreSQLSchema{},
+		},
+		watermill.NewStdLogger(false, false),
+	)
+	if err != nil {
+		return errors.Wrap(err, "create publisher")
+	}
+
+	publisher = forwarder.NewPublisher(publisher, forwarder.PublisherConfig{})
+
+	messages := make(message.Messages, 0, len(events))
+	for _, e := range events {
+		payload, err := json.Marshal(e)
+		if err != nil {
+			return errors.Wrap(err, "marshal event")
+		}
+		messages = append(messages, message.NewMessage(watermill.NewUUID(), payload))
+	}
+
+	if err := publisher.Publish(kafkaTopic, messages...); err != nil {
+		return errors.Wrap(err, "publish")
+	}
+	return nil
 }

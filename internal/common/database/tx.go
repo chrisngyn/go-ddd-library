@@ -1,4 +1,4 @@
-package adapters
+package database
 
 import (
 	"context"

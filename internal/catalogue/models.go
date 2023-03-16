@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
 
 	"github.com/chiennguyen196/go-library/internal/catalogue/models"
@@ -36,26 +38,32 @@ type BookInstance struct {
 	bookType        models.BookType
 }
 
-func NewBookInstance(bookID, bookIsbn, libraryBranchID string, bookType BookType) (BookInstance, error) {
+func NewBookInstance(bookID, bookIsbn, libraryBranchID string, bookType BookType) (instance BookInstance, event BookInstanceAdded, err error) {
 	if bookID == "" {
-		return BookInstance{}, commonErrors.NewIncorrectInputError("missing-book-id", "missing book id")
+		return instance, event, commonErrors.NewIncorrectInputError("missing-book-id", "missing book id")
 	}
 	if bookIsbn == "" {
-		return BookInstance{}, commonErrors.NewIncorrectInputError("missing-book-isbn", "missing book isbn")
+		return instance, event, commonErrors.NewIncorrectInputError("missing-book-isbn", "missing book isbn")
 	}
 	if libraryBranchID == "" {
-		return BookInstance{}, commonErrors.NewIncorrectInputError("missing-library-branch-id", "missing library branch id")
+		return instance, event, commonErrors.NewIncorrectInputError("missing-library-branch-id", "missing library branch id")
 	}
 	dbBookType, err := toDBBookType(bookType)
 	if err != nil {
-		return BookInstance{}, commonErrors.NewIncorrectInputError("invalid-book-type", err.Error())
+		return instance, event, commonErrors.NewIncorrectInputError("invalid-book-type", err.Error())
 	}
 	return BookInstance{
-		bookID:          bookID,
-		bookIsbn:        bookIsbn,
-		libraryBranchID: libraryBranchID,
-		bookType:        dbBookType,
-	}, nil
+			bookID:          bookID,
+			bookIsbn:        bookIsbn,
+			libraryBranchID: libraryBranchID,
+			bookType:        dbBookType,
+		}, BookInstanceAdded{
+			ISBN:            bookIsbn,
+			BookID:          bookID,
+			BookType:        dbBookType,
+			LibraryBranchID: libraryBranchID,
+			When:            time.Now(),
+		}, nil
 }
 
 func toDBBookType(bookType BookType) (models.BookType, error) {
@@ -67,4 +75,12 @@ func toDBBookType(bookType BookType) (models.BookType, error) {
 	default:
 		return "", commonErrors.NewIncorrectInputError("invalid-book-type", "invalid book type")
 	}
+}
+
+type BookInstanceAdded struct {
+	ISBN            string          `json:"isbn"`
+	BookID          string          `json:"bookID"`
+	BookType        models.BookType `json:"bookType"`
+	LibraryBranchID string          `json:"libraryBranchID"`
+	When            time.Time       `json:"when"`
 }

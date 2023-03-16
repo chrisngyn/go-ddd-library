@@ -8,6 +8,7 @@ import (
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
+	"github.com/chiennguyen196/go-library/internal/common/database"
 	"github.com/chiennguyen196/go-library/internal/lending/adapters/models"
 	"github.com/chiennguyen196/go-library/internal/lending/app/query"
 	"github.com/chiennguyen196/go-library/internal/lending/domain"
@@ -29,7 +30,7 @@ func (r PostgresPatronRepository) Get(ctx context.Context, patronID domain.Patro
 }
 
 func (r PostgresPatronRepository) Update(ctx context.Context, patronID domain.PatronID, updateFn func(ctx context.Context, patron *domain.Patron) error) error {
-	return WithTx(ctx, r.db, func(tx *sql.Tx) error {
+	return database.WithTx(ctx, r.db, func(tx *sql.Tx) error {
 		patron, err := getPatronByID(ctx, tx, patronID, true)
 		if err != nil {
 			return errors.Wrap(err, "get patron")
@@ -46,7 +47,7 @@ func (r PostgresPatronRepository) Update(ctx context.Context, patronID domain.Pa
 }
 
 func (r PostgresPatronRepository) UpdateWithBook(ctx context.Context, patronID domain.PatronID, bookID domain.BookID, updateFn func(ctx context.Context, patron *domain.Patron, book *domain.Book) error) error {
-	return WithTx(ctx, r.db, func(tx *sql.Tx) error {
+	return database.WithTx(ctx, r.db, func(tx *sql.Tx) error {
 		patron, err := getPatronByID(ctx, tx, patronID, true)
 		if err != nil {
 			return errors.Wrap(err, "get patron")
