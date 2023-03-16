@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"reflect"
 
 	"github.com/ThreeDotsLabs/watermill"
 	watermillSQL "github.com/ThreeDotsLabs/watermill-sql/pkg/sql"
@@ -80,7 +81,9 @@ func publishEvents(tx *sql.Tx, events ...interface{}) error {
 		if err != nil {
 			return errors.Wrap(err, "marshal event")
 		}
-		messages = append(messages, message.NewMessage(watermill.NewUUID(), payload))
+		msg := message.NewMessage(watermill.NewUUID(), payload)
+		msg.Metadata.Set("eventType", reflect.TypeOf(e).Name())
+		messages = append(messages, msg)
 	}
 
 	if err := publisher.Publish(kafkaTopic, messages...); err != nil {
