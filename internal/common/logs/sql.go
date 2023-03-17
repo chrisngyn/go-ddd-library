@@ -2,6 +2,8 @@ package logs
 
 import (
 	"context"
+	"regexp"
+	"strings"
 
 	"github.com/rs/zerolog"
 	sqldblogger "github.com/simukti/sqldb-logger"
@@ -31,5 +33,21 @@ func (a SQLLogAdapter) Log(ctx context.Context, level sqldblogger.Level, msg str
 		lvl = zerolog.DebugLevel
 	}
 
+	normalizeQuery(data)
+
 	zerolog.Ctx(ctx).WithLevel(lvl).Fields(data).Msg(msg)
+}
+
+var spaceReg, _ = regexp.Compile("[\\s\n\t]+")
+
+func normalizeQuery(data map[string]interface{}) {
+	rawQuery, ok := data["query"]
+	if !ok {
+		return
+	}
+	query, ok := rawQuery.(string)
+	if !ok {
+		return
+	}
+	data["query"] = strings.TrimSpace(spaceReg.ReplaceAllString(query, " "))
 }

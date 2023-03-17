@@ -8,6 +8,7 @@ require (
 	github.com/ThreeDotsLabs/watermill v1.2.0
 	github.com/ThreeDotsLabs/watermill-kafka/v2 v2.2.2
 	github.com/ThreeDotsLabs/watermill-sql v1.3.8
+	github.com/alexdrl/zerowater v0.0.3
 	github.com/chiennguyen196/go-library/internal/common v0.0.0-00010101000000-000000000000
 	github.com/deepmap/oapi-codegen v1.12.4
 	github.com/friendsofgo/errors v0.9.2
@@ -25,6 +26,7 @@ require (
 	github.com/Shopify/sarama v1.32.0 // indirect
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
+	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/eapache/go-resiliency v1.2.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect

@@ -11,7 +11,10 @@ import (
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill-kafka/v2/pkg/kafka"
 	watermillSQL "github.com/ThreeDotsLabs/watermill-sql/pkg/sql"
-	"github.com/ThreeDotsLabs/watermill/components/forwarder"
+	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
+	"github.com/ThreeDotsLabs/watermill/message/router/plugin"
+	"github.com/alexdrl/zerowater"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 
@@ -20,12 +23,15 @@ import (
 	"github.com/chiennguyen196/go-library/internal/common/server"
 )
 
-const (
-	kafkaTopic = "catalogue-events"
+var (
+	logger     watermill.LoggerAdapter = watermill.NopLogger{}
+	mysqlTable                         = "events"
 )
 
 func main() {
 	logs.Init()
+
+	logger = zerowater.NewZerologLoggerAdapter(log.Logger.With().Str("component", "watermill").Logger())
 
 	severToRun := strings.ToLower(os.Args[1])
 
@@ -46,39 +52,62 @@ func main() {
 }
 
 func RunForwarder(db *sql.DB) {
-	sqlSubscriber, err := watermillSQL.NewSubscriber(
+	router, err := message.NewRouter(message.RouterConfig{}, logger)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Fail to create router")
+	}
+
+	router.AddPlugin(plugin.SignalsHandler)
+	router.AddMiddleware(middleware.Recoverer)
+
+	subscriber, err := watermillSQL.NewSubscriber(
 		db,
 		watermillSQL.SubscriberConfig{
 			SchemaAdapter:    watermillSQL.DefaultPostgreSQLSchema{},
 			OffsetsAdapter:   watermillSQL.DefaultPostgreSQLOffsetsAdapter{},
 			InitializeSchema: true,
 		},
-		watermill.NewStdLogger(false, false),
+		logger,
 	)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Fail to create sql subscriber")
+		log.Fatal().Err(err).Msg("Fail to create subscriber")
 	}
 
-	kafkaPublisher, err := kafka.NewPublisher(
+	brokers := strings.Split(os.Getenv("KAFKA_BROKERS"), ",")
+	if len(brokers) == 0 {
+		panic("missing KAFKA_BROKERS")
+	}
+
+	publisher, err := kafka.NewPublisher(
 		kafka.PublisherConfig{
-			Brokers:   []string{"localhost:9092"},
+			Brokers:   brokers,
 			Marshaler: kafka.DefaultMarshaler{},
 		},
-		watermill.NewStdLogger(false, false),
+		logger,
+	)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Fail to create publisher")
+	}
+
+	kafkaTopic := os.Getenv("KAFKA_CATALOGUE_EVENTS_TOPIC")
+	if kafkaTopic == "" {
+		panic("missing KAFKA_CATALOGUE_EVENTS_TOPIC")
+	}
+
+	router.AddHandler(
+		"mysql-to-kafka",
+		mysqlTable,
+		subscriber,
+		kafkaTopic,
+		publisher,
+		func(msg *message.Message) ([]*message.Message, error) {
+			log.Info().Msgf("Forward event with uuid: %s", msg.UUID)
+			return []*message.Message{msg}, nil
+		},
 	)
 
-	if err != nil {
-		log.Fatal().Err(err).Msg("Fail to create kafka publisher")
+	if err := router.Run(context.Background()); err != nil {
+		log.Fatal().Err(err).Msg("Error run router")
 	}
 
-	fwd, err := forwarder.NewForwarder(sqlSubscriber, kafkaPublisher, watermill.NewStdLogger(false, false), forwarder.Config{})
-	if err != nil {
-		log.Fatal().Err(err).Msg("Fail to create forwarder")
-	}
-
-	if err := fwd.Run(context.Background()); err != nil {
-		log.Fatal().Err(err).Msg("Run forwarder fail")
-	}
-
-	return
 }

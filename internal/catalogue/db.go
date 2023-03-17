@@ -8,7 +8,6 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill"
 	watermillSQL "github.com/ThreeDotsLabs/watermill-sql/pkg/sql"
-	"github.com/ThreeDotsLabs/watermill/components/forwarder"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -61,19 +60,16 @@ func (d DB) AddABookInstance(ctx context.Context, instance BookInstance, event B
 }
 
 func publishEvents(tx *sql.Tx, events ...interface{}) error {
-	var publisher message.Publisher
 	publisher, err := watermillSQL.NewPublisher(
 		tx,
 		watermillSQL.PublisherConfig{
 			SchemaAdapter: watermillSQL.DefaultPostgreSQLSchema{},
 		},
-		watermill.NewStdLogger(false, false),
+		logger,
 	)
 	if err != nil {
 		return errors.Wrap(err, "create publisher")
 	}
-
-	publisher = forwarder.NewPublisher(publisher, forwarder.PublisherConfig{})
 
 	messages := make(message.Messages, 0, len(events))
 	for _, e := range events {
@@ -86,7 +82,7 @@ func publishEvents(tx *sql.Tx, events ...interface{}) error {
 		messages = append(messages, msg)
 	}
 
-	if err := publisher.Publish(kafkaTopic, messages...); err != nil {
+	if err := publisher.Publish(mysqlTable, messages...); err != nil {
 		return errors.Wrap(err, "publish")
 	}
 	return nil
