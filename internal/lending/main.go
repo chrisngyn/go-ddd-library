@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog/log"
 
 	"github.com/chiennguyen196/go-library/internal/common/logs"
 	"github.com/chiennguyen196/go-library/internal/common/server"
@@ -32,6 +33,8 @@ func main() {
 	case "job":
 		jobName := strings.ToLower(os.Args[2])
 		RunJob(jobName, anApp)
+	case "consumer":
+		RunConsumer(anApp)
 	default:
 		panic(fmt.Sprintf("Not support serverToRun=%s", severToRun))
 	}
@@ -46,5 +49,12 @@ func RunJob(jobName string, anApp app.Application) {
 		job.MarkOverdueCheckouts(time.Now())
 	default:
 		panic(fmt.Sprintf("Not support job=%s", jobName))
+	}
+}
+
+func RunConsumer(anApp app.Application) {
+	consumer := ports.NewKafkaConsumer(anApp)
+	if err := consumer.ConsumeCatalogueEvents(); err != nil {
+		log.Fatal().Err(err).Msg("Fail to consume message")
 	}
 }

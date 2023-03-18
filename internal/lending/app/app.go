@@ -16,6 +16,7 @@ type Commands struct {
 	CheckOut            command.CheckoutHandler
 	ReturnBook          command.ReturnBookHandler
 	MarkOverdueCheckout command.MarkOverdueCheckoutHandler
+	AddNewBook          command.AddNewBookHandler
 }
 
 type Queries struct {

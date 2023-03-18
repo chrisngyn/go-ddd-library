@@ -273,3 +273,14 @@ func toDBBookStatus(status domain.BookStatus) models.BookStatus {
 		return ""
 	}
 }
+
+func toDBBookType(bookType domain.BookType) models.BookType {
+	switch bookType {
+	case domain.BookTypeCirculating:
+		return models.BookTypeCirculating
+	case domain.BookTypeRestricted:
+		return models.BookTypeRestricted
+	default:
+		return ""
+	}
+}

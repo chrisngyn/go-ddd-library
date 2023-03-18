@@ -21,6 +21,7 @@ func NewApplication() (app.Application, func()) {
 			CheckOut:            command.NewCheckoutHandler(patronRepo),
 			ReturnBook:          command.NewReturnBookHandler(bookRepo),
 			MarkOverdueCheckout: command.NewMarkOverdueCheckoutHandler(patronRepo),
+			AddNewBook:          command.NewAddNewBookHandler(bookRepo),
 		},
 		Queries: app.Queries{
 			PatronProfile:    query.NewPatronProfileHandler(patronRepo),

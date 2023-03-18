@@ -5,8 +5,11 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/chiennguyen196/go-library/internal/common/database"
 	"github.com/chiennguyen196/go-library/internal/lending/adapters/models"
@@ -25,6 +28,29 @@ func NewPostgresBookRepository(db *sql.DB) PostgresBookRepository {
 	return PostgresBookRepository{
 		db: db,
 	}
+}
+
+func (r PostgresBookRepository) CreateAvailableBook(ctx context.Context, book domain.BookInformation) error {
+	dbBook := models.Book{
+		ID:              string(book.BookID),
+		LibraryBranchID: string(book.PlacedAt),
+		BookType:        toDBBookType(book.BookType),
+		BookStatus:      models.BookStatusAvailable,
+	}
+
+	err := dbBook.Insert(ctx, r.db, boil.Infer())
+	var pgErr *pq.Error
+	if errors.As(err, &pgErr) {
+		if pgErr.Code.Name() == "unique_violation" {
+			// Ignoring for idempotency
+			log.Ctx(ctx).Info().Msg("Duplicate book id. Ignore!")
+			return nil
+		}
+	}
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r PostgresBookRepository) Get(ctx context.Context, bookID domain.BookID) (domain.Book, error) {

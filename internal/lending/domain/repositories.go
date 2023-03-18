@@ -26,6 +26,7 @@ type PatronRepository interface {
 }
 
 type BookRepository interface {
+	CreateAvailableBook(ctx context.Context, book BookInformation) error
 	Update(
 		ctx context.Context,
 		bookID BookID,
