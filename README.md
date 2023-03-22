@@ -2,7 +2,9 @@
 This is an attempt to apply DDD, Clean Architecture, and CQRS with Golang.
 
 ## Domain description
-The domain is borrowed from [ddd-by-examples](https://github.com/ddd-by-examples/library). Read it for more details.
+The domain is borrowed from [ddd-by-examples](https://github.com/ddd-by-examples/library).   
+There are two primary pillars of DDD’s strengths: **Ubiquitous Language** and **Bounded Context**.   
+Read this repository above carefully to see how to use **Event Storming** to discover Ubiquitous Language, Bounded Context and Aggregates in our Domain.  
 > A public library allows patrons to place books on hold at its various library branches. Available books can be placed on hold only by one patron at any given point in time. 
 > Books are either circulating or restricted, and can have retrieval or usage fees. A restricted book can only be held by a researcher patron. 
 > A regular patron is limited to five holds at any given moment, while a researcher patron is allowed an unlimited number of holds. An open-ended book hold is active until the patron checks out the book, at which time it is completed. 
