@@ -4,6 +4,8 @@ import (
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
 )
 
+// Patron is a person who borrows books from the library. It is an aggregate root.
+// And it contains some information to determine if a patron can hold a book or not.
 type Patron struct {
 	id               PatronID
 	patronType       PatronType

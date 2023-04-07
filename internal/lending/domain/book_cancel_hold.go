@@ -8,6 +8,7 @@ var (
 	ErrBookNotOnHold = commonErrors.NewIncorrectInputError("book-not-on-hold", "book not on hold")
 )
 
+// CancelHold cancels a book on hold.
 func (b *Book) CancelHold() error {
 	if b.status != BookStatusOnHold {
 		return ErrBookNotOnHold

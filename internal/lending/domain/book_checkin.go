@@ -8,6 +8,7 @@ var (
 	ErrBookNotCheckedOut = commonErrors.NewIncorrectInputError("book-not-checked-out", "book not checked out")
 )
 
+// CheckIn checks in a book.
 func (b *Book) CheckIn() error {
 	if b.status != BookStatusCheckedOut {
 		return ErrBookNotCheckedOut

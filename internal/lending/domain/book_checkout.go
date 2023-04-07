@@ -12,6 +12,7 @@ var (
 	ErrBookNotHoldByPatron = commonErrors.NewIncorrectInputError("book-not-hold-by-patron", "book not hold by patron")
 )
 
+// Checkout checks out a book.
 func (b *Book) Checkout(patronID PatronID, at time.Time) error {
 	if b.status != BookStatusOnHold {
 		return ErrBookNotOnHold

@@ -1,3 +1,6 @@
+// Package service is where we initialize the application and its dependencies.
+// At here, we will wire up all the dependencies and create the application instance.
+// It also contains the component tests, and it's separated with go build tag component.
 package service
 
 import (

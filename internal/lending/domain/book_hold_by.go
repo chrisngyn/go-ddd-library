@@ -8,6 +8,7 @@ var (
 	ErrBookNotAvailable = commonErrors.NewIncorrectInputError("book-not-available", "book not available")
 )
 
+// HoldBy mark a book is hold by a patron.
 func (b *Book) HoldBy(patronID PatronID, holdDuration HoldDuration) error {
 	if b.status != BookStatusAvailable {
 		return ErrBookNotAvailable

@@ -23,6 +23,10 @@ import (
 	"github.com/chiennguyen196/go-library/internal/common/server"
 )
 
+// Catalogue context is quite simple. It's just a bunch of CRUD APIs.
+// So we don't need to apply hexagon architecture into it because it seemed so over-engineering.
+// And apply simple architecture instead. If this context become more complicated, we can apply hexagon architecture into it later.
+
 var (
 	logger     watermill.LoggerAdapter = watermill.NopLogger{}
 	mysqlTable                         = "events"

@@ -6,6 +6,10 @@ import (
 	"github.com/chiennguyen196/go-library/internal/lending/domain"
 )
 
+// Those structs here are read models. It used as for mapping data from many domain entities and return client.
+// There are good reason to separate it with domain model because it's usually not contain complex business logic.
+// And easy change depends on client requirement.
+
 type PatronProfile struct {
 	PatronID         string
 	PatronType       domain.PatronType

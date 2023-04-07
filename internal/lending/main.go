@@ -17,6 +17,10 @@ import (
 	"github.com/chiennguyen196/go-library/internal/lending/service"
 )
 
+// This package implement logic of lending bounded context.
+// Because it has complicated business logic, so it's better to apply hexagon architecture into it.
+// You can see some packages named like: domain, ports, service, app. All of it relative with terminology of hexagon architecture.
+
 func main() {
 	logs.Init()
 
