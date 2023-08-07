@@ -13,12 +13,6 @@ const (
 	Restricted  BookType = "Restricted"
 )
 
-// BaseResponse defines model for BaseResponse.
-type BaseResponse struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-}
-
 // BookType defines model for BookType.
 type BookType string
 

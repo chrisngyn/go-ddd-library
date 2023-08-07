@@ -24,7 +24,7 @@ func (h HttpServer) CancelHold(w http.ResponseWriter, r *http.Request, patronId 
 		return
 	}
 
-	respondSuccess(w, r)
+	render.NoContent(w, r)
 }
 
 func toCancelHoldCommand(patronID openapi_types.UUID, req CancelHoldJSONRequestBody) command.CancelHoldCommand {

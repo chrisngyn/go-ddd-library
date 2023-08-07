@@ -19,12 +19,6 @@ const (
 	Researcher PatronType = "Researcher"
 )
 
-// BaseResponse defines model for BaseResponse.
-type BaseResponse struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-}
-
 // CheckedOut defines model for CheckedOut.
 type CheckedOut struct {
 	BookId          openapi_types.UUID `json:"bookId"`

@@ -25,7 +25,7 @@ func (h HttpServer) Checkout(w http.ResponseWriter, r *http.Request, patronId op
 		return
 	}
 
-	respondSuccess(w, r)
+	render.NoContent(w, r)
 }
 
 func toCheckoutCommand(patronID openapi_types.UUID, req CheckoutJSONRequestBody) command.CheckoutCommand {

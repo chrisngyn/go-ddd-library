@@ -292,7 +292,6 @@ type ClientWithResponsesInterface interface {
 type CreateABookResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *BaseResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -314,7 +313,6 @@ func (r CreateABookResponse) StatusCode() int {
 type CreateABookInstanceResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *BaseResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -380,16 +378,6 @@ func ParseCreateABookResponse(rsp *http.Response) (*CreateABookResponse, error) 
 		HTTPResponse: rsp,
 	}
 
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest BaseResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
 	return response, nil
 }
 
@@ -404,16 +392,6 @@ func ParseCreateABookInstanceResponse(rsp *http.Response) (*CreateABookInstanceR
 	response := &CreateABookInstanceResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest BaseResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
 	}
 
 	return response, nil

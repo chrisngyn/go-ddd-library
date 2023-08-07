@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/go-chi/render"
 
 	"github.com/chiennguyen196/go-library/internal/common/server/httperr"
 	"github.com/chiennguyen196/go-library/internal/lending/app/query"
@@ -18,7 +19,7 @@ func (h HttpServer) GetPatronProfile(w http.ResponseWriter, r *http.Request, pat
 		httperr.RespondWithSlugError(err, w, r)
 		return
 	}
-	respondWithData(w, r, map[string]any{
+	render.JSON(w, r, map[string]any{
 		"patronProfile": toResponsePatronProfile(profile),
 	})
 }

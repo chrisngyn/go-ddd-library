@@ -485,7 +485,6 @@ type ClientWithResponsesInterface interface {
 type ReturnBookResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *BaseResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -507,7 +506,6 @@ func (r ReturnBookResponse) StatusCode() int {
 type CheckoutResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *BaseResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -529,7 +527,6 @@ func (r CheckoutResponse) StatusCode() int {
 type CancelHoldResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *BaseResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -551,7 +548,6 @@ func (r CancelHoldResponse) StatusCode() int {
 type PlaceHoldResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *BaseResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -574,11 +570,7 @@ type GetPatronProfileResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
-		Code string `json:"code"`
-		Data struct {
-			PatronProfile PatronProfile `json:"patronProfile"`
-		} `json:"data"`
-		Message string `json:"message"`
+		PatronProfile PatronProfile `json:"patronProfile"`
 	}
 }
 
@@ -680,16 +672,6 @@ func ParseReturnBookResponse(rsp *http.Response) (*ReturnBookResponse, error) {
 		HTTPResponse: rsp,
 	}
 
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest BaseResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
 	return response, nil
 }
 
@@ -704,16 +686,6 @@ func ParseCheckoutResponse(rsp *http.Response) (*CheckoutResponse, error) {
 	response := &CheckoutResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest BaseResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -732,16 +704,6 @@ func ParseCancelHoldResponse(rsp *http.Response) (*CancelHoldResponse, error) {
 		HTTPResponse: rsp,
 	}
 
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest BaseResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
 	return response, nil
 }
 
@@ -756,16 +718,6 @@ func ParsePlaceHoldResponse(rsp *http.Response) (*PlaceHoldResponse, error) {
 	response := &PlaceHoldResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest BaseResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -787,11 +739,7 @@ func ParseGetPatronProfileResponse(rsp *http.Response) (*GetPatronProfileRespons
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
-			Code string `json:"code"`
-			Data struct {
-				PatronProfile PatronProfile `json:"patronProfile"`
-			} `json:"data"`
-			Message string `json:"message"`
+			PatronProfile PatronProfile `json:"patronProfile"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err

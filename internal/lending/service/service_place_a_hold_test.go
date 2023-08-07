@@ -29,7 +29,7 @@ func TestServer_PlaceOnHold(t *testing.T) {
 
 	statusCode := client.PlaceOnHold(t, uuid.MustParse(dbPatron.ID), uuid.MustParse(dbBook.ID), 5)
 
-	assert.EqualValues(t, http.StatusOK, statusCode)
+	assert.EqualValues(t, http.StatusNoContent, statusCode)
 }
 
 func addExampleAvailableBook(t *testing.T, db *sql.DB) *models.Book {

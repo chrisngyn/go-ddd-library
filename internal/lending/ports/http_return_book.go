@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/go-chi/render"
 
 	"github.com/chiennguyen196/go-library/internal/common/server/httperr"
 	"github.com/chiennguyen196/go-library/internal/lending/app/command"
@@ -16,5 +17,5 @@ func (h HttpServer) ReturnBook(w http.ResponseWriter, r *http.Request, bookId op
 		httperr.RespondWithSlugError(err, w, r)
 		return
 	}
-	respondSuccess(w, r)
+	render.NoContent(w, r)
 }

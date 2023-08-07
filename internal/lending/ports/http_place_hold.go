@@ -30,7 +30,8 @@ func (h HttpServer) PlaceHold(w http.ResponseWriter, r *http.Request, patronId o
 		httperr.RespondWithSlugError(err, w, r)
 		return
 	}
-	respondSuccess(w, r)
+
+	render.NoContent(w, r)
 }
 
 func buildPlaceOnHoldCommand(patronID openapi_types.UUID, req PlaceHoldJSONRequestBody) (cmd command.PlaceOnHoldCommand, err error) {

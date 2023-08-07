@@ -39,17 +39,11 @@ paths:
             application/json:
               schema:
                 title: GetPatronProfileResponse
-                allOf:
-                  - $ref: "#/components/schemas/BaseResponse"
-                  - type: object
-                    required: [ data ]
-                    properties:
-                      data:
-                        type: object
-                        required: [ patronProfile ]
-                        properties:
-                          patronProfile:
-                            $ref: "#/components/schemas/PatronProfile"
+                type: object
+                required: [ patronProfile ]
+                properties:
+                  patronProfile:
+                    $ref: "#/components/schemas/PatronProfile"
 
   /patrons/{patronId}/holds:
     post:
@@ -82,12 +76,9 @@ paths:
                 - bookId
                 - numOfDays
       responses:
-        200:
+        204:
           description: success
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BaseResponse"
+
     delete:
       operationId: cancelHold
       description: cancel a hold
@@ -115,12 +106,8 @@ paths:
               required:
                 - bookId
       responses:
-        200:
+        204:
           description: success
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BaseResponse"
 
   /patrons/{patronId}/checkout:
     post:
@@ -150,12 +137,9 @@ paths:
               required:
                 - bookId
       responses:
-        200:
+        204:
           description: success
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BaseResponse"
+
 
   /books/{bookId}/return:
     put:
@@ -172,12 +156,8 @@ paths:
             minimum: 0
           required: true
       responses:
-        200:
+        204:
           description: success
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BaseResponse"
 
 components:
   securitySchemes:
@@ -186,15 +166,15 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
-    BaseResponse:
+    ErrorResponse:
       type: object
       properties:
-        code:
+        slug:
           type: string
         message:
           type: string
       required:
-        - code
+        - slug
         - message
 
     PatronProfile:

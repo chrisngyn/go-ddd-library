@@ -43,12 +43,9 @@ paths:
                 - title
                 - author
       responses:
-        200:
+        204:
           description: success
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BaseResponse"
+
   /books/{isbn}/instances:
     post:
       operationId: createABookInstance
@@ -78,12 +75,8 @@ paths:
                 - placedAt
                 - bookType
       responses:
-        200:
+        204:
           description: success
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BaseResponse"
 
 components:
   securitySchemes:
@@ -92,17 +85,6 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
-    BaseResponse:
-      type: object
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-      required:
-        - code
-        - message
-
     BookType:
       type: string
       nullable: false
