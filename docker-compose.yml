@@ -12,7 +12,7 @@ services:
       PGDATA: /data/postgres
     volumes:
       - ./db_data:/data/postgres
-      - ./migrations/init:/docker-entrypoint-initdb.d
+      - ./scripts/init:/docker-entrypoint-initdb.d
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.2
