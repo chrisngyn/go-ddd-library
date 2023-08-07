@@ -1,4 +1,4 @@
-package domain
+package book
 
 import (
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
@@ -10,12 +10,12 @@ var (
 
 // CheckIn checks in a book.
 func (b *Book) CheckIn() error {
-	if b.status != BookStatusCheckedOut {
+	if b.status != StatusCheckedOut {
 		return ErrBookNotCheckedOut
 	}
 
 	b.checkedOutInfo = CheckedOutInformation{}
-	b.status = BookStatusAvailable
+	b.status = StatusAvailable
 
 	return nil
 }

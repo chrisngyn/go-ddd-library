@@ -1,8 +1,9 @@
-package domain
+package book
 
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
@@ -13,8 +14,8 @@ var (
 )
 
 // Checkout checks out a book.
-func (b *Book) Checkout(patronID PatronID, at time.Time) error {
-	if b.status != BookStatusOnHold {
+func (b *Book) Checkout(patronID uuid.UUID, at time.Time) error {
+	if b.status != StatusOnHold {
 		return ErrBookNotOnHold
 	}
 
@@ -22,7 +23,7 @@ func (b *Book) Checkout(patronID PatronID, at time.Time) error {
 		return errors.Wrapf(ErrBookNotHoldByPatron, "checkoutBy=%s holdBy=%s", patronID, b.holdInfo.ByPatron)
 	}
 
-	b.status = BookStatusCheckedOut
+	b.status = StatusCheckedOut
 	b.holdInfo = HoldInformation{}
 	b.checkedOutInfo = CheckedOutInformation{
 		ByPatron: patronID,

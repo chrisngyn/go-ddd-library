@@ -4,11 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
 	"github.com/chiennguyen196/go-library/internal/common/monitoring"
 	"github.com/chiennguyen196/go-library/internal/lending/domain"
+	"github.com/chiennguyen196/go-library/internal/lending/domain/book"
+	"github.com/chiennguyen196/go-library/internal/lending/domain/patron"
 )
 
 type ReturnBookHandler struct {
@@ -31,7 +34,7 @@ func (h ReturnBookHandler) Handle(ctx context.Context, cmd ReturnBookCommand) (e
 		return errors.Wrap(err, "validate input")
 	}
 
-	if err := h.bookRepository.UpdateWithPatron(ctx, cmd.BookID, func(ctx context.Context, book *domain.Book, patron *domain.Patron) error {
+	if err := h.bookRepository.UpdateWithPatron(ctx, cmd.BookID, func(ctx context.Context, book *book.Book, patron *patron.Patron) error {
 		if err := book.CheckIn(); err != nil {
 			return errors.Wrap(err, "check in book")
 		}
@@ -46,11 +49,11 @@ func (h ReturnBookHandler) Handle(ctx context.Context, cmd ReturnBookCommand) (e
 }
 
 type ReturnBookCommand struct {
-	BookID domain.BookID
+	BookID uuid.UUID
 }
 
 func (c ReturnBookCommand) validate() error {
-	if c.BookID.IsZero() {
+	if c.BookID == uuid.Nil {
 		return commonErrors.NewIncorrectInputError("missing-book-id", "missing book id")
 	}
 	return nil

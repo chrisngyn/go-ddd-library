@@ -8,7 +8,6 @@ import (
 
 	"github.com/chiennguyen196/go-library/internal/lending/app/command"
 	"github.com/chiennguyen196/go-library/internal/lending/app/query"
-	"github.com/chiennguyen196/go-library/internal/lending/domain"
 )
 
 func (j Job) MarkOverdueCheckouts(at time.Time) {
@@ -22,8 +21,8 @@ func (j Job) MarkOverdueCheckouts(at time.Time) {
 	for _, o := range overdueCheckouts {
 		err := j.app.Commands.MarkOverdueCheckout.Handle(ctx, command.MarkOverdueCheckoutCommand{
 			PatronID:        o.PatronID,
-			BookID:          domain.BookID(o.BookID),
-			LibraryBranchID: domain.LibraryBranchID(o.LibraryBranchID),
+			BookID:          o.BookID,
+			LibraryBranchID: o.LibraryBranchID,
 		})
 		if err != nil {
 			log.Fatal().Err(err).Msg("Cannot mark overdue checkout")

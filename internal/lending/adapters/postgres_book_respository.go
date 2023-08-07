@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -14,7 +15,8 @@ import (
 	"github.com/chiennguyen196/go-library/internal/common/database"
 	"github.com/chiennguyen196/go-library/internal/lending/adapters/models"
 	"github.com/chiennguyen196/go-library/internal/lending/app/query"
-	"github.com/chiennguyen196/go-library/internal/lending/domain"
+	"github.com/chiennguyen196/go-library/internal/lending/domain/book"
+	"github.com/chiennguyen196/go-library/internal/lending/domain/patron"
 )
 
 type PostgresBookRepository struct {
@@ -30,10 +32,10 @@ func NewPostgresBookRepository(db *sql.DB) PostgresBookRepository {
 	}
 }
 
-func (r PostgresBookRepository) CreateAvailableBook(ctx context.Context, book domain.BookInformation) error {
+func (r PostgresBookRepository) CreateAvailableBook(ctx context.Context, book book.Information) error {
 	dbBook := models.Book{
-		ID:              string(book.BookID),
-		LibraryBranchID: string(book.PlacedAt),
+		ID:              book.BookID.String(),
+		LibraryBranchID: book.PlacedAt.String(),
 		BookType:        toDBBookType(book.BookType),
 		BookStatus:      models.BookStatusAvailable,
 	}
@@ -53,22 +55,22 @@ func (r PostgresBookRepository) CreateAvailableBook(ctx context.Context, book do
 	return nil
 }
 
-func (r PostgresBookRepository) Get(ctx context.Context, bookID domain.BookID) (domain.Book, error) {
+func (r PostgresBookRepository) Get(ctx context.Context, bookID uuid.UUID) (book.Book, error) {
 	return getBookByID(ctx, r.db, bookID, false)
 }
 
-func (r PostgresBookRepository) Update(ctx context.Context, bookID domain.BookID, updateFn func(ctx context.Context, book *domain.Book) error) error {
+func (r PostgresBookRepository) Update(ctx context.Context, bookID uuid.UUID, updateFn func(ctx context.Context, book *book.Book) error) error {
 	return database.WithTx(ctx, r.db, func(tx *sql.Tx) error {
-		book, err := getBookByID(ctx, tx, bookID, true)
+		aBook, err := getBookByID(ctx, tx, bookID, true)
 		if err != nil {
 			return errors.Wrap(err, "get book by id")
 		}
 
-		if err := updateFn(ctx, &book); err != nil {
+		if err := updateFn(ctx, &aBook); err != nil {
 			return err
 		}
 
-		if err := updateBook(ctx, tx, book); err != nil {
+		if err := updateBook(ctx, tx, aBook); err != nil {
 			return errors.Wrap(err, "update book")
 		}
 
@@ -76,25 +78,25 @@ func (r PostgresBookRepository) Update(ctx context.Context, bookID domain.BookID
 	})
 }
 
-func (r PostgresBookRepository) UpdateWithPatron(ctx context.Context, bookID domain.BookID, updateFn func(ctx context.Context, book *domain.Book, patron *domain.Patron) error) error {
+func (r PostgresBookRepository) UpdateWithPatron(ctx context.Context, bookID uuid.UUID, updateFn func(ctx context.Context, book *book.Book, patron *patron.Patron) error) error {
 	return database.WithTx(ctx, r.db, func(tx *sql.Tx) error {
-		book, err := getBookByID(ctx, tx, bookID, true)
+		aBook, err := getBookByID(ctx, tx, bookID, true)
 		if err != nil {
 			return errors.Wrap(err, "get book by id")
 		}
-		patron, err := getPatronByID(ctx, tx, book.ByPatronID(), true)
+		aPatron, err := getPatronByID(ctx, tx, aBook.ByPatronID(), true)
 		if err != nil {
 			return errors.Wrap(err, "get patron by id")
 		}
 
-		if err := updateFn(ctx, &book, &patron); err != nil {
+		if err := updateFn(ctx, &aBook, &aPatron); err != nil {
 			return err
 		}
 
-		if err := updatePatron(ctx, tx, patron); err != nil {
+		if err := updatePatron(ctx, tx, aPatron); err != nil {
 			return errors.Wrap(err, "update patron")
 		}
-		if err := updateBook(ctx, tx, book); err != nil {
+		if err := updateBook(ctx, tx, aBook); err != nil {
 			return errors.Wrap(err, "update book")
 		}
 		return nil
@@ -113,9 +115,9 @@ func (r PostgresBookRepository) ListExpiredHolds(ctx context.Context, at time.Ti
 	result := make([]query.ExpiredHold, 0, len(books))
 	for _, b := range books {
 		result = append(result, query.ExpiredHold{
-			BookID:          domain.BookID(b.ID),
-			LibraryBranchID: domain.LibraryBranchID(b.LibraryBranchID),
-			PatronID:        domain.PatronID(b.PatronID.String),
+			BookID:          uuid.MustParse(b.ID),
+			LibraryBranchID: uuid.MustParse(b.LibraryBranchID),
+			PatronID:        uuid.MustParse(b.PatronID.String),
 			HoldTill:        b.HoldTill.Time,
 		})
 	}
@@ -134,9 +136,9 @@ func (r PostgresBookRepository) ListOverdueCheckouts(ctx context.Context, at tim
 	result := make([]query.OverdueCheckout, 0, len(books))
 	for _, b := range books {
 		result = append(result, query.OverdueCheckout{
-			PatronID:        domain.PatronID(b.PatronID.String),
-			BookID:          b.ID,
-			LibraryBranchID: b.LibraryBranchID,
+			PatronID:        uuid.MustParse(b.PatronID.String),
+			BookID:          uuid.MustParse(b.ID),
+			LibraryBranchID: uuid.MustParse(b.LibraryBranchID),
 		})
 	}
 	return result, nil

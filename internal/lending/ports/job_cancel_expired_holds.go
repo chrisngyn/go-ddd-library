@@ -24,8 +24,8 @@ func (j Job) CancelExpiredHolds(at time.Time) {
 		}); err != nil {
 			log.Fatal().
 				Err(err).
-				Str("patronID", string(hold.PatronID)).
-				Str("bookID", string(hold.BookID)).
+				Str("patronID", hold.PatronID.String()).
+				Str("bookID", hold.BookID.String()).
 				Msg("Cancel hold fail")
 		}
 	}

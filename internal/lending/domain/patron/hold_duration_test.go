@@ -1,4 +1,4 @@
-package domain_test
+package patron_test
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/chiennguyen196/go-library/internal/lending/domain"
+	"github.com/chiennguyen196/go-library/internal/lending/domain/patron"
 )
 
 func TestNewHoldDuration(t *testing.T) {
@@ -16,7 +16,7 @@ func TestNewHoldDuration(t *testing.T) {
 		startTime := time.Now()
 		numOfDays := 10
 
-		holdDuration, err := domain.NewHoldDuration(startTime, numOfDays)
+		holdDuration, err := patron.NewHoldDuration(startTime, numOfDays)
 		require.NoError(t, err)
 
 		assert.False(t, holdDuration.IsZero())
@@ -28,7 +28,7 @@ func TestNewHoldDuration(t *testing.T) {
 		t.Parallel()
 		startTime := time.Now()
 
-		holdDuration, err := domain.NewHoldDuration(startTime, 0)
+		holdDuration, err := patron.NewHoldDuration(startTime, 0)
 		require.NoError(t, err)
 
 		assert.False(t, holdDuration.IsZero())
@@ -43,10 +43,10 @@ func TestNewHoldDuration_invalid(t *testing.T) {
 	from := time.Now()
 	numOfDays := 10
 
-	_, err := domain.NewHoldDuration(time.Time{}, numOfDays)
+	_, err := patron.NewHoldDuration(time.Time{}, numOfDays)
 	assert.Error(t, err)
 
-	_, err = domain.NewHoldDuration(from, -1)
+	_, err = patron.NewHoldDuration(from, -1)
 	assert.Error(t, err)
 }
 
@@ -54,9 +54,9 @@ func TestNewHoldDurationFromTill_invalid(t *testing.T) {
 	t.Parallel()
 	from := time.Now()
 
-	_, err := domain.NewHoldDurationFromTill(time.Time{}, from.AddDate(0, 0, 1))
+	_, err := patron.NewHoldDurationFromTill(time.Time{}, from.AddDate(0, 0, 1))
 	assert.Error(t, err)
 
-	_, err = domain.NewHoldDurationFromTill(from, from.AddDate(0, 0, -1))
+	_, err = patron.NewHoldDurationFromTill(from, from.AddDate(0, 0, -1))
 	assert.Error(t, err)
 }

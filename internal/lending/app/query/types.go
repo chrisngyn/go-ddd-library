@@ -3,7 +3,9 @@ package query
 import (
 	"time"
 
-	"github.com/chiennguyen196/go-library/internal/lending/domain"
+	"github.com/google/uuid"
+
+	"github.com/chiennguyen196/go-library/internal/lending/domain/patron"
 )
 
 // Those structs here are read models. It used as for mapping data from many domain entities and return client.
@@ -11,28 +13,28 @@ import (
 // And easy change depends on client requirement.
 
 type PatronProfile struct {
-	PatronID         string
-	PatronType       domain.PatronType
-	Holds            []domain.Hold
+	PatronID         uuid.UUID
+	PatronType       patron.Type
+	Holds            []patron.Hold
 	CheckedOuts      []CheckedOut
 	OverdueCheckouts []OverdueCheckout
 }
 
 type CheckedOut struct {
-	BookID          string
-	LibraryBranchID string
+	BookID          uuid.UUID
+	LibraryBranchID uuid.UUID
 	At              time.Time
 }
 
 type OverdueCheckout struct {
-	PatronID        domain.PatronID
-	BookID          string
-	LibraryBranchID string
+	PatronID        uuid.UUID
+	BookID          uuid.UUID
+	LibraryBranchID uuid.UUID
 }
 
 type ExpiredHold struct {
-	BookID          domain.BookID
-	LibraryBranchID domain.LibraryBranchID
-	PatronID        domain.PatronID
+	BookID          uuid.UUID
+	LibraryBranchID uuid.UUID
+	PatronID        uuid.UUID
 	HoldTill        time.Time
 }

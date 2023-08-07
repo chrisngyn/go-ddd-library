@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
+	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -16,19 +17,19 @@ import (
 type ServerInterface interface {
 
 	// (PUT /books/{bookId}/return)
-	ReturnBook(w http.ResponseWriter, r *http.Request, bookId string)
+	ReturnBook(w http.ResponseWriter, r *http.Request, bookId openapi_types.UUID)
 
 	// (POST /patrons/{patronId}/checkout)
-	Checkout(w http.ResponseWriter, r *http.Request, patronId string)
+	Checkout(w http.ResponseWriter, r *http.Request, patronId openapi_types.UUID)
 
 	// (DELETE /patrons/{patronId}/holds)
-	CancelHold(w http.ResponseWriter, r *http.Request, patronId string)
+	CancelHold(w http.ResponseWriter, r *http.Request, patronId openapi_types.UUID)
 
 	// (POST /patrons/{patronId}/holds)
-	PlaceHold(w http.ResponseWriter, r *http.Request, patronId string)
+	PlaceHold(w http.ResponseWriter, r *http.Request, patronId openapi_types.UUID)
 
 	// (GET /patrons/{patronId}/profile)
-	GetPatronProfile(w http.ResponseWriter, r *http.Request, patronId string)
+	GetPatronProfile(w http.ResponseWriter, r *http.Request, patronId openapi_types.UUID)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -47,7 +48,7 @@ func (siw *ServerInterfaceWrapper) ReturnBook(w http.ResponseWriter, r *http.Req
 	var err error
 
 	// ------------- Path parameter "bookId" -------------
-	var bookId string
+	var bookId openapi_types.UUID
 
 	err = runtime.BindStyledParameterWithLocation("simple", false, "bookId", runtime.ParamLocationPath, chi.URLParam(r, "bookId"), &bookId)
 	if err != nil {
@@ -75,7 +76,7 @@ func (siw *ServerInterfaceWrapper) Checkout(w http.ResponseWriter, r *http.Reque
 	var err error
 
 	// ------------- Path parameter "patronId" -------------
-	var patronId string
+	var patronId openapi_types.UUID
 
 	err = runtime.BindStyledParameterWithLocation("simple", false, "patronId", runtime.ParamLocationPath, chi.URLParam(r, "patronId"), &patronId)
 	if err != nil {
@@ -103,7 +104,7 @@ func (siw *ServerInterfaceWrapper) CancelHold(w http.ResponseWriter, r *http.Req
 	var err error
 
 	// ------------- Path parameter "patronId" -------------
-	var patronId string
+	var patronId openapi_types.UUID
 
 	err = runtime.BindStyledParameterWithLocation("simple", false, "patronId", runtime.ParamLocationPath, chi.URLParam(r, "patronId"), &patronId)
 	if err != nil {
@@ -131,7 +132,7 @@ func (siw *ServerInterfaceWrapper) PlaceHold(w http.ResponseWriter, r *http.Requ
 	var err error
 
 	// ------------- Path parameter "patronId" -------------
-	var patronId string
+	var patronId openapi_types.UUID
 
 	err = runtime.BindStyledParameterWithLocation("simple", false, "patronId", runtime.ParamLocationPath, chi.URLParam(r, "patronId"), &patronId)
 	if err != nil {
@@ -159,7 +160,7 @@ func (siw *ServerInterfaceWrapper) GetPatronProfile(w http.ResponseWriter, r *ht
 	var err error
 
 	// ------------- Path parameter "patronId" -------------
-	var patronId string
+	var patronId openapi_types.UUID
 
 	err = runtime.BindStyledParameterWithLocation("simple", false, "patronId", runtime.ParamLocationPath, chi.URLParam(r, "patronId"), &patronId)
 	if err != nil {

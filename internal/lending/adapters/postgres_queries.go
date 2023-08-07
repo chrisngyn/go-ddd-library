@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -13,11 +14,13 @@ import (
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
 	"github.com/chiennguyen196/go-library/internal/lending/adapters/models"
 	"github.com/chiennguyen196/go-library/internal/lending/domain"
+	"github.com/chiennguyen196/go-library/internal/lending/domain/book"
+	"github.com/chiennguyen196/go-library/internal/lending/domain/patron"
 )
 
-func getPatronByID(ctx context.Context, executor boil.ContextExecutor, patronID domain.PatronID, forUpdate bool) (domain.Patron, error) {
+func getPatronByID(ctx context.Context, executor boil.ContextExecutor, patronID uuid.UUID, forUpdate bool) (patron.Patron, error) {
 	mods := []qm.QueryMod{
-		models.PatronWhere.ID.EQ(string(patronID)),
+		models.PatronWhere.ID.EQ(patronID.String()),
 		qm.Load(models.PatronRels.Holds),
 		qm.Load(models.PatronRels.OverdueCheckouts),
 	}
@@ -26,37 +29,37 @@ func getPatronByID(ctx context.Context, executor boil.ContextExecutor, patronID 
 		mods = append(mods, qm.For("update"))
 	}
 
-	patron, err := models.Patrons(mods...).One(ctx, executor)
+	aPatron, err := models.Patrons(mods...).One(ctx, executor)
 	if errors.Is(err, sql.ErrNoRows) {
-		return domain.Patron{}, domain.ErrPatronNotFound
+		return patron.Patron{}, domain.ErrPatronNotFound
 	}
 	if err != nil {
-		return domain.Patron{}, err
+		return patron.Patron{}, err
 	}
 
-	return toPatronDomain(patron)
+	return toPatronDomain(aPatron)
 }
 
-func getBookByID(ctx context.Context, executor boil.ContextExecutor, bookID domain.BookID, forUpdate bool) (domain.Book, error) {
+func getBookByID(ctx context.Context, executor boil.ContextExecutor, bookID uuid.UUID, forUpdate bool) (book.Book, error) {
 	mods := []qm.QueryMod{
-		models.BookWhere.ID.EQ(string(bookID)),
+		models.BookWhere.ID.EQ(bookID.String()),
 	}
 	if forUpdate {
 		mods = append(mods, qm.For("update"))
 	}
 
-	book, err := models.Books(mods...).One(ctx, executor)
+	aBook, err := models.Books(mods...).One(ctx, executor)
 	if errors.Is(err, sql.ErrNoRows) {
-		return domain.Book{}, domain.ErrBookNotFound
+		return book.Book{}, domain.ErrBookNotFound
 	}
 	if err != nil {
-		return domain.Book{}, err
+		return book.Book{}, err
 	}
 
-	return toDomainBook(book)
+	return toDomainBook(aBook)
 }
 
-func updatePatron(ctx context.Context, executor boil.ContextExecutor, patron domain.Patron) error {
+func updatePatron(ctx context.Context, executor boil.ContextExecutor, patron patron.Patron) error {
 	if err := updateHolds(ctx, executor, patron); err != nil {
 		return errors.Wrap(err, "update holds")
 	}
@@ -66,9 +69,9 @@ func updatePatron(ctx context.Context, executor boil.ContextExecutor, patron dom
 	return nil
 }
 
-func updateHolds(ctx context.Context, executor boil.ContextExecutor, patron domain.Patron) error {
+func updateHolds(ctx context.Context, executor boil.ContextExecutor, patron patron.Patron) error {
 	_, err := models.Holds(
-		models.HoldWhere.PatronID.EQ(string(patron.ID())),
+		models.HoldWhere.PatronID.EQ(patron.ID().String()),
 	).DeleteAll(ctx, executor, false)
 	if err != nil {
 		return errors.Wrap(err, "delete holds")
@@ -76,9 +79,9 @@ func updateHolds(ctx context.Context, executor boil.ContextExecutor, patron doma
 
 	for _, h := range patron.Holds() {
 		hold := models.Hold{
-			PatronID:        string(patron.ID()),
-			BookID:          string(h.BookID),
-			LibraryBranchID: string(h.PlacedAt),
+			PatronID:        patron.ID().String(),
+			BookID:          h.BookID.String(),
+			LibraryBranchID: h.PlacedAt.String(),
 			HoldFrom:        h.HoldDuration.From(),
 			HoldTill: null.Time{
 				Time:  h.HoldDuration.Till(),
@@ -104,20 +107,20 @@ func updateHolds(ctx context.Context, executor boil.ContextExecutor, patron doma
 	return nil
 }
 
-func updateOverdueCheckouts(ctx context.Context, executor boil.ContextExecutor, patron domain.Patron) error {
+func updateOverdueCheckouts(ctx context.Context, executor boil.ContextExecutor, patron patron.Patron) error {
 	_, err := models.OverdueCheckouts(
-		models.OverdueCheckoutWhere.PatronID.EQ(string(patron.ID())),
+		models.OverdueCheckoutWhere.PatronID.EQ(patron.ID().String()),
 	).DeleteAll(ctx, executor, false)
 	if err != nil {
 		return errors.Wrap(err, "delete overdue checkouts")
 	}
 
 	for libraryBranch, books := range patron.OverdueCheckouts() {
-		for _, b := range books {
+		for _, bid := range books {
 			overdueCheckout := models.OverdueCheckout{
-				PatronID:        string(patron.ID()),
-				BookID:          string(b),
-				LibraryBranchID: string(libraryBranch),
+				PatronID:        patron.ID().String(),
+				BookID:          bid.String(),
+				LibraryBranchID: libraryBranch.String(),
 				DeletedAt:       null.Time{},
 			}
 			err := overdueCheckout.Upsert(ctx, executor, true, []string{
@@ -132,11 +135,11 @@ func updateOverdueCheckouts(ctx context.Context, executor boil.ContextExecutor, 
 	return nil
 }
 
-func updateBook(ctx context.Context, executor boil.ContextExecutor, book domain.Book) error {
-	_, err := models.Books(models.BookWhere.ID.EQ(string(book.BookInfo().BookID))).
+func updateBook(ctx context.Context, executor boil.ContextExecutor, book book.Book) error {
+	_, err := models.Books(models.BookWhere.ID.EQ(book.BookInfo().BookID.String())).
 		UpdateAll(ctx, executor, models.M{
 			models.BookColumns.BookStatus: toDBBookStatus(book.Status()),
-			models.BookColumns.PatronID:   null.NewString(string(book.ByPatronID()), book.ByPatronID() != ""),
+			models.BookColumns.PatronID:   null.NewString(book.ByPatronID().String(), book.ByPatronID() != uuid.Nil),
 			models.BookColumns.HoldTill: null.NewTime(
 				book.BookHoldInfo().Till,
 				!book.BookHoldInfo().Till.IsZero(),
@@ -153,49 +156,49 @@ func updateBook(ctx context.Context, executor boil.ContextExecutor, book domain.
 helper functions convert db entities to domain models
 */
 
-func toPatronDomain(patron *models.Patron) (domain.Patron, error) {
-	patronType, err := toDomainPatronType(patron.PatronType)
+func toPatronDomain(aPatron *models.Patron) (patron.Patron, error) {
+	patronType, err := toDomainPatronType(aPatron.PatronType)
 	if err != nil {
-		return domain.Patron{}, errors.Wrap(err, "to patron type")
+		return patron.Patron{}, errors.Wrap(err, "to patron type")
 	}
 
-	domainHolds, err := toDomainHolds(patron.R.Holds)
+	domainHolds, err := toDomainHolds(aPatron.R.Holds)
 	if err != nil {
-		return domain.Patron{}, errors.Wrap(err, "to domain holds")
+		return patron.Patron{}, errors.Wrap(err, "to domain holds")
 	}
 
-	domainPatron, err := domain.NewPatron(
-		domain.PatronID(patron.ID),
+	domainPatron, err := patron.NewPatron(
+		uuid.MustParse(aPatron.ID),
 		patronType,
 		domainHolds,
-		toDomainOverdueCheckouts(patron.R.OverdueCheckouts),
+		toDomainOverdueCheckouts(aPatron.R.OverdueCheckouts),
 	)
 	if err != nil {
-		return domain.Patron{}, commonErrors.NewUnknownErr("invalid-patron", err.Error())
+		return patron.Patron{}, commonErrors.NewUnknownErr("invalid-patron", err.Error())
 	}
 	return domainPatron, nil
 }
 
-func toDomainPatronType(patronType models.PatronType) (domain.PatronType, error) {
+func toDomainPatronType(patronType models.PatronType) (patron.Type, error) {
 	switch patronType {
 	case models.PatronTypeRegular:
-		return domain.PatronTypeRegular, nil
+		return patron.TypeRegular, nil
 	case models.PatronTypeResearcher:
-		return domain.PatronTypeResearcher, nil
+		return patron.TypeResearcher, nil
 	default:
-		return domain.PatronType{},
+		return patron.Type{},
 			commonErrors.NewUnknownErr("invalid-patron-type", fmt.Sprintf("unknown patron type %s", patronType))
 	}
 }
 
-func toDomainHolds(holds models.HoldSlice) ([]domain.Hold, error) {
-	domainHolds := make([]domain.Hold, 0, len(holds))
+func toDomainHolds(holds models.HoldSlice) ([]patron.Hold, error) {
+	domainHolds := make([]patron.Hold, 0, len(holds))
 	for _, h := range holds {
-		holdDuration, err := domain.NewHoldDurationFromTill(h.HoldFrom, h.HoldTill.Time)
+		holdDuration, err := patron.NewHoldDurationFromTill(h.HoldFrom, h.HoldTill.Time)
 		if err != nil {
 			return nil, commonErrors.NewUnknownErr("invalid-hold-duration", err.Error())
 		}
-		domainHold, err := domain.NewHold(domain.BookID(h.BookID), domain.LibraryBranchID(h.LibraryBranchID), holdDuration)
+		domainHold, err := patron.NewHold(uuid.MustParse(h.BookID), uuid.MustParse(h.LibraryBranchID), holdDuration)
 		if err != nil {
 			return nil, commonErrors.NewUnknownErr("invalid-hold", err.Error())
 		}
@@ -204,81 +207,81 @@ func toDomainHolds(holds models.HoldSlice) ([]domain.Hold, error) {
 	return domainHolds, nil
 }
 
-func toDomainOverdueCheckouts(overCheckouts models.OverdueCheckoutSlice) map[domain.LibraryBranchID][]domain.BookID {
-	result := make(map[domain.LibraryBranchID][]domain.BookID, len(overCheckouts))
+func toDomainOverdueCheckouts(overCheckouts models.OverdueCheckoutSlice) patron.OverdueCheckouts {
+	result := make(patron.OverdueCheckouts, len(overCheckouts))
 	for _, oc := range overCheckouts {
-		libraryBranchID := domain.LibraryBranchID(oc.LibraryBranchID)
-		bookID := domain.BookID(oc.BookID)
+		libraryBranchID := uuid.MustParse(oc.LibraryBranchID)
+		bookID := uuid.MustParse(oc.BookID)
 		result[libraryBranchID] = append(result[libraryBranchID], bookID)
 	}
 	return result
 }
 
-func toDomainBook(book *models.Book) (domainBook domain.Book, err error) {
-	bookType, err := toDomainBookType(book.BookType)
+func toDomainBook(aBook *models.Book) (domainBook book.Book, err error) {
+	bookType, err := toDomainBookType(aBook.BookType)
 	if err != nil {
 		return domainBook, errors.Wrap(err, "to domain book type")
 	}
 
-	bookInfo, err := domain.NewBookInformation(
-		domain.BookID(book.ID),
+	bookInfo, err := book.NewBookInformation(
+		uuid.MustParse(aBook.ID),
 		bookType,
-		domain.LibraryBranchID(book.LibraryBranchID),
+		uuid.MustParse(aBook.LibraryBranchID),
 	)
 	if err != nil {
 		return domainBook, commonErrors.NewUnknownErr("invalid-book-information", "invalid book information")
 	}
 
-	switch book.BookStatus {
+	switch aBook.BookStatus {
 	case models.BookStatusAvailable:
-		return domain.NewAvailableBook(bookInfo)
+		return book.NewAvailableBook(bookInfo)
 	case models.BookStatusOnHold:
-		return domain.NewBookOnHold(bookInfo, domain.HoldInformation{
-			ByPatron: domain.PatronID(book.PatronID.String),
-			Till:     book.HoldTill.Time,
+		return book.NewBookOnHold(bookInfo, book.HoldInformation{
+			ByPatron: uuid.MustParse(aBook.PatronID.String),
+			Till:     aBook.HoldTill.Time,
 		})
 	case models.BookStatusCheckedOut:
-		return domain.NewCheckedOutBook(bookInfo, domain.CheckedOutInformation{
-			ByPatron: domain.PatronID(book.PatronID.String),
-			At:       book.CheckedOutAt.Time,
+		return book.NewCheckedOutBook(bookInfo, book.CheckedOutInformation{
+			ByPatron: uuid.MustParse(aBook.PatronID.String),
+			At:       aBook.CheckedOutAt.Time,
 		})
 	default:
 		return domainBook, commonErrors.NewUnknownErr("invalid-book-status", "invalid book status")
 	}
 }
 
-func toDomainBookType(bookType models.BookType) (domain.BookType, error) {
+func toDomainBookType(bookType models.BookType) (book.Type, error) {
 	switch bookType {
 	case models.BookTypeRestricted:
-		return domain.BookTypeRestricted, nil
+		return book.TypeRestricted, nil
 	case models.BookTypeCirculating:
-		return domain.BookTypeCirculating, nil
+		return book.TypeCirculating, nil
 	default:
-		return domain.BookType{}, commonErrors.NewUnknownErr(
+		return book.Type{}, commonErrors.NewUnknownErr(
 			"invalid-book-type",
 			fmt.Sprintf("invalid book type %s", bookType),
 		)
 	}
 }
 
-func toDBBookStatus(status domain.BookStatus) models.BookStatus {
+func toDBBookStatus(status book.Status) models.BookStatus {
 	switch status {
-	case domain.BookStatusAvailable:
+	case book.StatusAvailable:
 		return models.BookStatusAvailable
-	case domain.BookStatusOnHold:
+	case book.StatusOnHold:
 		return models.BookStatusOnHold
-	case domain.BookStatusCheckedOut:
+	case book.StatusCheckedOut:
 		return models.BookStatusCheckedOut
 	default:
 		return ""
 	}
 }
 
-func toDBBookType(bookType domain.BookType) models.BookType {
+func toDBBookType(bookType book.Type) models.BookType {
 	switch bookType {
-	case domain.BookTypeCirculating:
+	case book.TypeCirculating:
 		return models.BookTypeCirculating
-	case domain.BookTypeRestricted:
+	case book.TypeRestricted:
 		return models.BookTypeRestricted
 	default:
 		return ""

@@ -1,4 +1,4 @@
-package domain_test
+package patron_test
 
 import (
 	"testing"
@@ -7,29 +7,29 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/chiennguyen196/go-library/internal/lending/domain"
+	"github.com/chiennguyen196/go-library/internal/lending/domain/patron"
 )
 
 func TestPatron_Checkout(t *testing.T) {
 	t.Run("checkout a hold that not existed", func(t *testing.T) {
 		t.Parallel()
-		patron := newExamplePatron(t, domain.PatronTypeRegular, []domain.Hold{
+		aPatron := newExamplePatron(t, patron.TypeRegular, []patron.Hold{
 			newExampleHold(t),
 		}, nil)
 
-		err := patron.Checkout(domain.BookID(uuid.NewString()))
+		err := aPatron.Checkout(uuid.New())
 
-		assert.ErrorIs(t, err, domain.ErrHoldNotFound)
+		assert.ErrorIs(t, err, patron.ErrHoldNotFound)
 	})
 
 	t.Run("checkout a hold successfully", func(t *testing.T) {
 		t.Parallel()
 		hold := newExampleHold(t)
-		patron := newExamplePatron(t, domain.PatronTypeRegular, []domain.Hold{hold}, nil)
+		aPatron := newExamplePatron(t, patron.TypeRegular, []patron.Hold{hold}, nil)
 
-		err := patron.Checkout(hold.BookID)
+		err := aPatron.Checkout(hold.BookID)
 		require.NoError(t, err)
 
-		assert.Len(t, patron.Holds(), 0)
+		assert.Len(t, aPatron.Holds(), 0)
 	})
 }

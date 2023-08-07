@@ -1,6 +1,8 @@
-package domain
+package book
 
 import (
+	"github.com/google/uuid"
+
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
 )
 
@@ -10,25 +12,25 @@ import (
 // And it will introduce more duplicate code. Example, when an AvailableBook is hold, we need to store hold information in it.
 // And it seems duplicate with the BookOnHold aggregate.
 type Book struct {
-	info   BookInformation
-	status BookStatus
+	info   Information
+	status Status
 
 	holdInfo       HoldInformation
 	checkedOutInfo CheckedOutInformation
 }
 
-func NewAvailableBook(information BookInformation) (Book, error) {
-	if information == (BookInformation{}) {
+func NewAvailableBook(information Information) (Book, error) {
+	if information == (Information{}) {
 		return Book{}, commonErrors.NewIncorrectInputError("missing-information", "missing book information")
 	}
 	return Book{
 		info:   information,
-		status: BookStatusAvailable,
+		status: StatusAvailable,
 	}, nil
 }
 
-func NewBookOnHold(information BookInformation, holdInformation HoldInformation) (Book, error) {
-	if information == (BookInformation{}) {
+func NewBookOnHold(information Information, holdInformation HoldInformation) (Book, error) {
+	if information == (Information{}) {
 		return Book{}, commonErrors.NewIncorrectInputError("missing-information", "missing book information")
 	}
 	if holdInformation == (HoldInformation{}) {
@@ -36,13 +38,13 @@ func NewBookOnHold(information BookInformation, holdInformation HoldInformation)
 	}
 	return Book{
 		info:     information,
-		status:   BookStatusOnHold,
+		status:   StatusOnHold,
 		holdInfo: holdInformation,
 	}, nil
 }
 
-func NewCheckedOutBook(information BookInformation, checkedOutInformation CheckedOutInformation) (Book, error) {
-	if information == (BookInformation{}) {
+func NewCheckedOutBook(information Information, checkedOutInformation CheckedOutInformation) (Book, error) {
+	if information == (Information{}) {
 		return Book{}, commonErrors.NewIncorrectInputError("missing-information", "missing book information")
 	}
 	if checkedOutInformation == (CheckedOutInformation{}) {
@@ -50,31 +52,31 @@ func NewCheckedOutBook(information BookInformation, checkedOutInformation Checke
 	}
 	return Book{
 		info:           information,
-		status:         BookStatusCheckedOut,
+		status:         StatusCheckedOut,
 		checkedOutInfo: checkedOutInformation,
 	}, nil
 }
 
-func (b *Book) ID() BookID {
+func (b *Book) ID() uuid.UUID {
 	return b.info.BookID
 }
 
-func (b *Book) BookInfo() BookInformation {
+func (b *Book) BookInfo() Information {
 	return b.info
 }
 
-func (b *Book) Status() BookStatus {
+func (b *Book) Status() Status {
 	return b.status
 }
 
-func (b *Book) ByPatronID() PatronID {
-	if b.status == BookStatusOnHold {
+func (b *Book) ByPatronID() uuid.UUID {
+	if b.status == StatusOnHold {
 		return b.holdInfo.ByPatron
 	}
-	if b.status == BookStatusCheckedOut {
+	if b.status == StatusCheckedOut {
 		return b.checkedOutInfo.ByPatron
 	}
-	return ""
+	return uuid.Nil
 }
 
 func (b *Book) BookHoldInfo() HoldInformation {

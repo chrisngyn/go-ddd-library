@@ -1,4 +1,4 @@
-package domain
+package book
 
 import (
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
@@ -10,12 +10,12 @@ var (
 
 // CancelHold cancels a book on hold.
 func (b *Book) CancelHold() error {
-	if b.status != BookStatusOnHold {
+	if b.status != StatusOnHold {
 		return ErrBookNotOnHold
 	}
 
 	b.holdInfo = HoldInformation{}
-	b.status = BookStatusAvailable
+	b.status = StatusAvailable
 
 	return nil
 }

@@ -20,7 +20,8 @@ import (
 	"github.com/chiennguyen196/go-library/internal/lending/adapters"
 	"github.com/chiennguyen196/go-library/internal/lending/adapters/models"
 	"github.com/chiennguyen196/go-library/internal/lending/app/query"
-	"github.com/chiennguyen196/go-library/internal/lending/domain"
+	"github.com/chiennguyen196/go-library/internal/lending/domain/book"
+	"github.com/chiennguyen196/go-library/internal/lending/domain/patron"
 )
 
 func TestPostgresBookRepository_Update(t *testing.T) {
@@ -32,13 +33,13 @@ func TestPostgresBookRepository_Update(t *testing.T) {
 	repo := adapters.NewPostgresBookRepository(db)
 	dbBook := addExampleAvailableBook(t, db)
 
-	var updatedBook *domain.Book
+	var updatedBook *book.Book
 
-	err := repo.Update(context.Background(), domain.BookID(dbBook.ID), func(ctx context.Context, book *domain.Book) error {
-		holdDuration, err := domain.NewHoldDuration(time.Now(), 5)
+	err := repo.Update(context.Background(), uuid.MustParse(dbBook.ID), func(ctx context.Context, book *book.Book) error {
+		holdDuration, err := patron.NewHoldDuration(time.Now(), 5)
 		require.NoError(t, err)
 
-		err = book.HoldBy(domain.PatronID(uuid.NewString()), holdDuration)
+		err = book.HoldBy(uuid.New(), holdDuration.Till())
 		require.NoError(t, err)
 
 		updatedBook = book
@@ -51,40 +52,40 @@ func TestPostgresBookRepository_Update(t *testing.T) {
 
 func addExampleAvailableBook(t *testing.T, db *sql.DB) *models.Book {
 	t.Helper()
-	book := &models.Book{
+	aBook := &models.Book{
 		ID:              uuid.NewString(),
 		LibraryBranchID: uuid.NewString(),
 		BookType:        models.BookTypeCirculating,
 		BookStatus:      models.BookStatusAvailable,
 	}
-	err := book.Insert(context.Background(), db, boil.Infer())
+	err := aBook.Insert(context.Background(), db, boil.Infer())
 	if err != nil {
 		t.Fatalf("Cannot create a available book: %v", err)
 	}
-	if err := book.Reload(context.Background(), db); err != nil {
+	if err := aBook.Reload(context.Background(), db); err != nil {
 		t.Fatalf("Cannot reload book: %v", err)
 	}
-	return book
+	return aBook
 }
 
-func assertPersistedBookEquals(t *testing.T, repo adapters.PostgresBookRepository, book *domain.Book) {
+func assertPersistedBookEquals(t *testing.T, repo adapters.PostgresBookRepository, aBook *book.Book) {
 	t.Helper()
-	persistedBook, err := repo.Get(context.Background(), book.ID())
+	persistedBook, err := repo.Get(context.Background(), aBook.ID())
 	require.NoError(t, err)
 
 	cmpOpts := []cmp.Option{
 		cmp.AllowUnexported(
 			time.Time{},
-			domain.BookType{},
-			domain.BookStatus{},
-			domain.Book{},
+			book.Type{},
+			book.Status{},
+			book.Book{},
 		),
 	}
 
 	assert.True(
 		t,
-		cmp.Equal(book, &persistedBook, cmpOpts...),
-		cmp.Diff(book, &persistedBook, cmpOpts...),
+		cmp.Equal(aBook, &persistedBook, cmpOpts...),
+		cmp.Diff(aBook, &persistedBook, cmpOpts...),
 	)
 
 }
@@ -103,14 +104,14 @@ func TestPostgresBookRepository_UpdateWithPatron(t *testing.T) {
 	dbBook := addExampleAvailableBook(t, db)
 
 	// Patron hold a book
-	err := patronRepo.UpdateWithBook(ctx, domain.PatronID(dbPatron.ID), domain.BookID(dbBook.ID), func(ctx context.Context, patron *domain.Patron, book *domain.Book) error {
-		holdDuration, err := domain.NewHoldDuration(time.Now(), 5)
+	err := patronRepo.UpdateWithBook(ctx, uuid.MustParse(dbPatron.ID), uuid.MustParse(dbBook.ID), func(ctx context.Context, aPatron *patron.Patron, aBook *book.Book) error {
+		holdDuration, err := patron.NewHoldDuration(time.Now(), 5)
 		require.NoError(t, err)
 
-		err = patron.PlaceOnHold(book.BookInfo(), holdDuration)
+		err = aPatron.PlaceOnHold(aBook.BookInfo(), holdDuration)
 		require.NoError(t, err)
 
-		err = book.HoldBy(patron.ID(), holdDuration)
+		err = aBook.HoldBy(aPatron.ID(), holdDuration.Till())
 		require.NoError(t, err)
 
 		return nil
@@ -118,17 +119,17 @@ func TestPostgresBookRepository_UpdateWithPatron(t *testing.T) {
 	require.NoError(t, err)
 
 	// Patron checkout book
-	var updatedPatron *domain.Patron
-	var updatedBook *domain.Book
-	err = repo.UpdateWithPatron(ctx, domain.BookID(dbBook.ID), func(ctx context.Context, book *domain.Book, patron *domain.Patron) error {
-		err := book.Checkout(patron.ID(), time.Now())
+	var updatedPatron *patron.Patron
+	var updatedBook *book.Book
+	err = repo.UpdateWithPatron(ctx, uuid.MustParse(dbBook.ID), func(ctx context.Context, aBook *book.Book, aPatron *patron.Patron) error {
+		err := aBook.Checkout(aPatron.ID(), time.Now())
 		require.NoError(t, err)
 
-		err = patron.Checkout(book.ID())
+		err = aPatron.Checkout(aBook.ID())
 		require.NoError(t, err)
 
-		updatedPatron = patron
-		updatedBook = book
+		updatedPatron = aPatron
+		updatedBook = aBook
 
 		return nil
 	})
@@ -151,9 +152,9 @@ func TestPostgresBookRepository_ListExpiredHolds(t *testing.T) {
 
 	expectedQueryExpiredHolds := []query.ExpiredHold{
 		{
-			BookID:          domain.BookID(dbBook.ID),
-			LibraryBranchID: domain.LibraryBranchID(dbBook.LibraryBranchID),
-			PatronID:        domain.PatronID(dbBook.PatronID.String),
+			BookID:          uuid.MustParse(dbBook.ID),
+			LibraryBranchID: uuid.MustParse(dbBook.LibraryBranchID),
+			PatronID:        uuid.MustParse(dbBook.PatronID.String),
 			HoldTill:        dbBook.HoldTill.Time,
 		},
 	}
@@ -167,7 +168,7 @@ func TestPostgresBookRepository_ListExpiredHolds(t *testing.T) {
 
 func addExpiredHoldBook(t *testing.T, db *sql.DB) *models.Book {
 	t.Helper()
-	book := &models.Book{
+	aBook := &models.Book{
 		ID:              uuid.NewString(),
 		LibraryBranchID: uuid.NewString(),
 		BookType:        models.BookTypeCirculating,
@@ -175,14 +176,14 @@ func addExpiredHoldBook(t *testing.T, db *sql.DB) *models.Book {
 		PatronID:        null.StringFrom(uuid.NewString()),
 		HoldTill:        null.TimeFrom(time.Now().AddDate(0, 0, -1)),
 	}
-	err := book.Insert(context.Background(), db, boil.Infer())
+	err := aBook.Insert(context.Background(), db, boil.Infer())
 	if err != nil {
 		t.Fatalf("Cannot create a expried book: %v", err)
 	}
-	if err := book.Reload(context.Background(), db); err != nil {
+	if err := aBook.Reload(context.Background(), db); err != nil {
 		t.Fatalf("Cannot reload expried book: %v", err)
 	}
-	return book
+	return aBook
 }
 
 func TestPostgresBookRepository_ListOverdueCheckouts(t *testing.T) {
@@ -197,9 +198,9 @@ func TestPostgresBookRepository_ListOverdueCheckouts(t *testing.T) {
 	dbBook := addOverdueCheckoutBook(t, db)
 	expectOverdueCheckouts := []query.OverdueCheckout{
 		{
-			PatronID:        domain.PatronID(dbBook.PatronID.String),
-			BookID:          dbBook.ID,
-			LibraryBranchID: dbBook.LibraryBranchID,
+			PatronID:        uuid.MustParse(dbBook.PatronID.String),
+			BookID:          uuid.MustParse(dbBook.ID),
+			LibraryBranchID: uuid.MustParse(dbBook.LibraryBranchID),
 		},
 	}
 
@@ -211,7 +212,7 @@ func TestPostgresBookRepository_ListOverdueCheckouts(t *testing.T) {
 
 func addOverdueCheckoutBook(t *testing.T, db *sql.DB) *models.Book {
 	t.Helper()
-	book := &models.Book{
+	aBook := &models.Book{
 		ID:              uuid.NewString(),
 		LibraryBranchID: uuid.NewString(),
 		BookType:        models.BookTypeCirculating,
@@ -219,12 +220,12 @@ func addOverdueCheckoutBook(t *testing.T, db *sql.DB) *models.Book {
 		PatronID:        null.StringFrom(uuid.NewString()),
 		CheckedOutAt:    null.TimeFrom(time.Now().AddDate(0, 0, -70)), // just a day so far
 	}
-	err := book.Insert(context.Background(), db, boil.Infer())
+	err := aBook.Insert(context.Background(), db, boil.Infer())
 	if err != nil {
 		t.Fatalf("Cannot create a expried book: %v", err)
 	}
-	if err := book.Reload(context.Background(), db); err != nil {
+	if err := aBook.Reload(context.Background(), db); err != nil {
 		t.Fatalf("Cannot reload expried book: %v", err)
 	}
-	return book
+	return aBook
 }

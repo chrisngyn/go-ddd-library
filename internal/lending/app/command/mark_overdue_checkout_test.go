@@ -8,20 +8,19 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/chiennguyen196/go-library/internal/lending/app/command"
-	"github.com/chiennguyen196/go-library/internal/lending/domain"
 )
 
 func TestMarkOverdueCheckoutHandler_Handle_invalid_command(t *testing.T) {
-	patronID := domain.PatronID(uuid.NewString())
-	bookID := domain.BookID(uuid.NewString())
-	libraryBranchID := domain.LibraryBranchID(uuid.NewString())
+	patronID := uuid.New()
+	bookID := uuid.New()
+	libraryBranchID := uuid.New()
 
 	h := command.MarkOverdueCheckoutHandler{}
 
 	tests := []command.MarkOverdueCheckoutCommand{
-		{"", bookID, libraryBranchID},
-		{patronID, "", libraryBranchID},
-		{patronID, bookID, ""},
+		{uuid.Nil, bookID, libraryBranchID},
+		{patronID, uuid.Nil, libraryBranchID},
+		{patronID, bookID, uuid.Nil},
 	}
 
 	for _, tt := range tests {

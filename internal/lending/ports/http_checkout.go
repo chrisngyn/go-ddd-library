@@ -4,14 +4,14 @@ import (
 	"net/http"
 	"time"
 
+	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/go-chi/render"
 
 	"github.com/chiennguyen196/go-library/internal/common/server/httperr"
 	"github.com/chiennguyen196/go-library/internal/lending/app/command"
-	"github.com/chiennguyen196/go-library/internal/lending/domain"
 )
 
-func (h HttpServer) Checkout(w http.ResponseWriter, r *http.Request, patronId string) {
+func (h HttpServer) Checkout(w http.ResponseWriter, r *http.Request, patronId openapi_types.UUID) {
 	var req CheckoutJSONRequestBody
 	if err := render.Decode(r, &req); err != nil {
 		httperr.BadRequest("decode-fail", err, w, r)
@@ -28,10 +28,10 @@ func (h HttpServer) Checkout(w http.ResponseWriter, r *http.Request, patronId st
 	respondSuccess(w, r)
 }
 
-func toCheckoutCommand(patronID string, req CheckoutJSONRequestBody) command.CheckoutCommand {
+func toCheckoutCommand(patronID openapi_types.UUID, req CheckoutJSONRequestBody) command.CheckoutCommand {
 	return command.CheckoutCommand{
 		RequestAt: time.Now(),
-		PatronID:  domain.PatronID(patronID),
-		BookID:    domain.BookID(req.BookId),
+		PatronID:  patronID,
+		BookID:    req.BookId,
 	}
 }

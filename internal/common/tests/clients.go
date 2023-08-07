@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/chiennguyen196/go-library/internal/common/client/lending"
@@ -27,7 +28,7 @@ func NewLendingHTTPClient(t *testing.T, address, parentRoute string) LendingHTTP
 	return LendingHTTPClient{client: client}
 }
 
-func (c LendingHTTPClient) PlaceOnHold(t *testing.T, patronID, bookID string, numOfDays int) int {
+func (c LendingHTTPClient) PlaceOnHold(t *testing.T, patronID, bookID uuid.UUID, numOfDays int) int {
 	response, err := c.client.PlaceHold(context.Background(), patronID, lending.PlaceHoldJSONRequestBody{
 		BookId:    bookID,
 		NumOfDays: numOfDays,

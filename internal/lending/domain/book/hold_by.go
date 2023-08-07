@@ -1,6 +1,10 @@
-package domain
+package book
 
 import (
+	"time"
+
+	"github.com/google/uuid"
+
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
 )
 
@@ -9,15 +13,15 @@ var (
 )
 
 // HoldBy mark a book is hold by a patron.
-func (b *Book) HoldBy(patronID PatronID, holdDuration HoldDuration) error {
-	if b.status != BookStatusAvailable {
+func (b *Book) HoldBy(patronID uuid.UUID, till time.Time) error {
+	if b.status != StatusAvailable {
 		return ErrBookNotAvailable
 	}
 
 	b.holdInfo = HoldInformation{
 		ByPatron: patronID,
-		Till:     holdDuration.till,
+		Till:     till,
 	}
-	b.status = BookStatusOnHold
+	b.status = StatusOnHold
 	return nil
 }

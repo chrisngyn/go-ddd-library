@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -12,6 +13,8 @@ import (
 	"github.com/chiennguyen196/go-library/internal/lending/adapters/models"
 	"github.com/chiennguyen196/go-library/internal/lending/app/query"
 	"github.com/chiennguyen196/go-library/internal/lending/domain"
+	"github.com/chiennguyen196/go-library/internal/lending/domain/book"
+	"github.com/chiennguyen196/go-library/internal/lending/domain/patron"
 )
 
 type PostgresPatronRepository struct {
@@ -25,46 +28,46 @@ func NewPostgresPatronRepository(db *sql.DB) PostgresPatronRepository {
 	return PostgresPatronRepository{db: db}
 }
 
-func (r PostgresPatronRepository) Get(ctx context.Context, patronID domain.PatronID) (domain.Patron, error) {
+func (r PostgresPatronRepository) Get(ctx context.Context, patronID uuid.UUID) (patron.Patron, error) {
 	return getPatronByID(ctx, r.db, patronID, false)
 }
 
-func (r PostgresPatronRepository) Update(ctx context.Context, patronID domain.PatronID, updateFn func(ctx context.Context, patron *domain.Patron) error) error {
+func (r PostgresPatronRepository) Update(ctx context.Context, patronID uuid.UUID, updateFn func(ctx context.Context, patron *patron.Patron) error) error {
 	return database.WithTx(ctx, r.db, func(tx *sql.Tx) error {
-		patron, err := getPatronByID(ctx, tx, patronID, true)
+		aPatron, err := getPatronByID(ctx, tx, patronID, true)
 		if err != nil {
 			return errors.Wrap(err, "get patron")
 		}
 
-		if err := updateFn(ctx, &patron); err != nil {
+		if err := updateFn(ctx, &aPatron); err != nil {
 			return err
 		}
-		if err := updatePatron(ctx, tx, patron); err != nil {
+		if err := updatePatron(ctx, tx, aPatron); err != nil {
 			return errors.Wrap(err, "update patron")
 		}
 		return nil
 	})
 }
 
-func (r PostgresPatronRepository) UpdateWithBook(ctx context.Context, patronID domain.PatronID, bookID domain.BookID, updateFn func(ctx context.Context, patron *domain.Patron, book *domain.Book) error) error {
+func (r PostgresPatronRepository) UpdateWithBook(ctx context.Context, patronID uuid.UUID, bookID uuid.UUID, updateFn func(ctx context.Context, patron *patron.Patron, book *book.Book) error) error {
 	return database.WithTx(ctx, r.db, func(tx *sql.Tx) error {
-		patron, err := getPatronByID(ctx, tx, patronID, true)
+		aPatron, err := getPatronByID(ctx, tx, patronID, true)
 		if err != nil {
 			return errors.Wrap(err, "get patron")
 		}
-		book, err := getBookByID(ctx, tx, bookID, true)
+		aBook, err := getBookByID(ctx, tx, bookID, true)
 		if err != nil {
 			return errors.Wrap(err, "get book")
 		}
 
-		if err := updateFn(ctx, &patron, &book); err != nil {
+		if err := updateFn(ctx, &aPatron, &aBook); err != nil {
 			return errors.Wrap(err, "update")
 		}
 
-		if err := updatePatron(ctx, tx, patron); err != nil {
+		if err := updatePatron(ctx, tx, aPatron); err != nil {
 			return errors.Wrap(err, "update patron")
 		}
-		if err := updateBook(ctx, tx, book); err != nil {
+		if err := updateBook(ctx, tx, aBook); err != nil {
 			return errors.Wrap(err, "update book")
 		}
 
@@ -72,9 +75,9 @@ func (r PostgresPatronRepository) UpdateWithBook(ctx context.Context, patronID d
 	})
 }
 
-func (r PostgresPatronRepository) GetPatronProfile(ctx context.Context, patronID domain.PatronID) (p query.PatronProfile, err error) {
-	patron, err := models.Patrons(
-		models.PatronWhere.ID.EQ(string(patronID)),
+func (r PostgresPatronRepository) GetPatronProfile(ctx context.Context, patronID uuid.UUID) (p query.PatronProfile, err error) {
+	aPatron, err := models.Patrons(
+		models.PatronWhere.ID.EQ(patronID.String()),
 		qm.Load(models.PatronRels.Holds),
 		qm.Load(models.PatronRels.OverdueCheckouts),
 	).One(ctx, r.db)
@@ -86,21 +89,21 @@ func (r PostgresPatronRepository) GetPatronProfile(ctx context.Context, patronID
 	}
 	books, err := models.Books(
 		models.BookWhere.BookStatus.EQ(models.BookStatusCheckedOut),
-		models.BookWhere.PatronID.EQ(null.StringFrom(string(patronID))),
+		models.BookWhere.PatronID.EQ(null.StringFrom(patronID.String())),
 	).All(ctx, r.db)
 	if err != nil {
 		return p, errors.Wrap(err, "get checkout books")
 	}
 
-	return toQueryPatronProfile(patron, books)
+	return toQueryPatronProfile(aPatron, books)
 }
 
 func toQueryPatronProfile(patron *models.Patron, checkedOutBooks models.BookSlice) (p query.PatronProfile, err error) {
 	queryCheckedOuts := make([]query.CheckedOut, 0, len(checkedOutBooks))
 	for _, c := range checkedOutBooks {
 		queryCheckedOuts = append(queryCheckedOuts, query.CheckedOut{
-			BookID:          c.ID,
-			LibraryBranchID: c.LibraryBranchID,
+			BookID:          uuid.MustParse(c.ID),
+			LibraryBranchID: uuid.MustParse(c.LibraryBranchID),
 			At:              c.CheckedOutAt.Time,
 		})
 	}
@@ -116,14 +119,14 @@ func toQueryPatronProfile(patron *models.Patron, checkedOutBooks models.BookSlic
 	queryOverdueCheckouts := make([]query.OverdueCheckout, 0, len(patron.R.OverdueCheckouts))
 	for _, c := range patron.R.OverdueCheckouts {
 		queryOverdueCheckouts = append(queryOverdueCheckouts, query.OverdueCheckout{
-			PatronID:        domain.PatronID(patron.ID),
-			BookID:          c.BookID,
-			LibraryBranchID: c.LibraryBranchID,
+			PatronID:        uuid.MustParse(patron.ID),
+			BookID:          uuid.MustParse(c.BookID),
+			LibraryBranchID: uuid.MustParse(c.LibraryBranchID),
 		})
 	}
 
 	return query.PatronProfile{
-		PatronID:         patron.ID,
+		PatronID:         uuid.MustParse(patron.ID),
 		PatronType:       patronType,
 		Holds:            holds,
 		CheckedOuts:      queryCheckedOuts,

@@ -10,21 +10,21 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/chiennguyen196/go-library/internal/lending/app/command"
-	"github.com/chiennguyen196/go-library/internal/lending/domain"
+	"github.com/chiennguyen196/go-library/internal/lending/domain/patron"
 )
 
 func TestPlaceOnHoldHandler_Handle_invalid_command(t *testing.T) {
-	patronID := domain.PatronID(uuid.NewString())
-	bookID := domain.BookID(uuid.NewString())
-	holdDuration, err := domain.NewHoldDuration(time.Now(), 5)
+	patronID := uuid.New()
+	bookID := uuid.New()
+	holdDuration, err := patron.NewHoldDuration(time.Now(), 5)
 	require.NoError(t, err)
 
 	h := command.PlaceOnHoldHandler{}
 
 	tests := []command.PlaceOnHoldCommand{
-		{"", bookID, holdDuration},
-		{patronID, "", holdDuration},
-		{patronID, bookID, domain.HoldDuration{}},
+		{uuid.Nil, bookID, holdDuration},
+		{patronID, uuid.Nil, holdDuration},
+		{patronID, bookID, patron.HoldDuration{}},
 	}
 
 	for _, tt := range tests {

@@ -9,19 +9,18 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/chiennguyen196/go-library/internal/lending/app/command"
-	"github.com/chiennguyen196/go-library/internal/lending/domain"
 )
 
 func TestCheckoutHandler_Handle_invalid_command(t *testing.T) {
-	patronID := domain.PatronID(uuid.NewString())
-	bookID := domain.BookID(uuid.NewString())
+	patronID := uuid.New()
+	bookID := uuid.New()
 
 	h := command.CheckoutHandler{}
 
 	tests := []command.CheckoutCommand{
 		{time.Time{}, patronID, bookID},
-		{time.Now(), "", bookID},
-		{time.Now(), patronID, ""},
+		{time.Now(), uuid.Nil, bookID},
+		{time.Now(), patronID, uuid.Nil},
 	}
 
 	for _, tt := range tests {

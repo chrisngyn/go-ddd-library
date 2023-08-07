@@ -18,7 +18,8 @@ import (
 	"github.com/chiennguyen196/go-library/internal/lending/adapters"
 	"github.com/chiennguyen196/go-library/internal/lending/adapters/models"
 	"github.com/chiennguyen196/go-library/internal/lending/app/query"
-	"github.com/chiennguyen196/go-library/internal/lending/domain"
+	"github.com/chiennguyen196/go-library/internal/lending/domain/book"
+	"github.com/chiennguyen196/go-library/internal/lending/domain/patron"
 )
 
 func TestPostgresPatronRepository_Update(t *testing.T) {
@@ -30,10 +31,10 @@ func TestPostgresPatronRepository_Update(t *testing.T) {
 	repo := adapters.NewPostgresPatronRepository(db)
 	dbPatron := addExamplePatron(t, db)
 
-	var updatedPatron *domain.Patron
+	var updatedPatron *patron.Patron
 
-	err := repo.Update(context.Background(), domain.PatronID(dbPatron.ID), func(ctx context.Context, patron *domain.Patron) error {
-		patron.MarkOverdueCheckout(domain.BookID(uuid.NewString()), domain.LibraryBranchID(uuid.NewString()))
+	err := repo.Update(context.Background(), uuid.MustParse(dbPatron.ID), func(ctx context.Context, patron *patron.Patron) error {
+		patron.MarkOverdueCheckout(uuid.New(), uuid.New())
 		updatedPatron = patron
 		return nil
 	})
@@ -44,38 +45,38 @@ func TestPostgresPatronRepository_Update(t *testing.T) {
 
 func addExamplePatron(t *testing.T, db *sql.DB) *models.Patron {
 	t.Helper()
-	patron := &models.Patron{
+	aPatron := &models.Patron{
 		ID:         uuid.NewString(),
 		PatronType: models.PatronTypeRegular,
 	}
-	if err := patron.Insert(context.Background(), db, boil.Infer()); err != nil {
+	if err := aPatron.Insert(context.Background(), db, boil.Infer()); err != nil {
 		t.Fatalf("Error crate new patron: %v", err)
 	}
-	if err := patron.Reload(context.Background(), db); err != nil {
+	if err := aPatron.Reload(context.Background(), db); err != nil {
 		t.Fatalf("Error to reload patron: %v", err)
 	}
-	return patron
+	return aPatron
 }
 
-func assertPersistedPatronEquals(t *testing.T, repo adapters.PostgresPatronRepository, patron *domain.Patron) {
+func assertPersistedPatronEquals(t *testing.T, repo adapters.PostgresPatronRepository, aPatron *patron.Patron) {
 	t.Helper()
-	persistedPatron, err := repo.Get(context.Background(), patron.ID())
+	persistedPatron, err := repo.Get(context.Background(), aPatron.ID())
 	require.NoError(t, err)
 
 	cmpOpts := []cmp.Option{
 		cmp.AllowUnexported(
 			time.Time{},
-			domain.PatronType{},
-			domain.Patron{},
-			domain.Hold{},
-			domain.HoldDuration{},
+			patron.Type{},
+			patron.Patron{},
+			patron.Hold{},
+			patron.HoldDuration{},
 		),
 	}
 
 	assert.True(
 		t,
-		cmp.Equal(patron, &persistedPatron, cmpOpts...),
-		cmp.Diff(patron, &persistedPatron, cmpOpts...),
+		cmp.Equal(aPatron, &persistedPatron, cmpOpts...),
+		cmp.Diff(aPatron, &persistedPatron, cmpOpts...),
 	)
 }
 
@@ -89,21 +90,21 @@ func TestPostgresPatronRepository_UpdateWithBook(t *testing.T) {
 	dbPatron := addExamplePatron(t, db)
 	dbBook := addExampleAvailableBook(t, db)
 
-	var updatedPatron *domain.Patron
-	var updatedBook *domain.Book
+	var updatedPatron *patron.Patron
+	var updatedBook *book.Book
 
-	err := repo.UpdateWithBook(context.Background(), domain.PatronID(dbPatron.ID), domain.BookID(dbBook.ID), func(ctx context.Context, patron *domain.Patron, book *domain.Book) error {
-		holdDuration, err := domain.NewHoldDuration(time.Now(), 5)
+	err := repo.UpdateWithBook(context.Background(), uuid.MustParse(dbPatron.ID), uuid.MustParse(dbBook.ID), func(ctx context.Context, aPatron *patron.Patron, aBook *book.Book) error {
+		holdDuration, err := patron.NewHoldDuration(time.Now(), 5)
 		require.NoError(t, err)
 
-		err = patron.PlaceOnHold(book.BookInfo(), holdDuration)
+		err = aPatron.PlaceOnHold(aBook.BookInfo(), holdDuration)
 		require.NoError(t, err)
 
-		err = book.HoldBy(patron.ID(), holdDuration)
+		err = aBook.HoldBy(aPatron.ID(), holdDuration.Till())
 		require.NoError(t, err)
 
-		updatedPatron = patron
-		updatedBook = book
+		updatedPatron = aPatron
+		updatedBook = aBook
 		return nil
 	})
 	require.NoError(t, err)
@@ -122,26 +123,26 @@ func TestPostgresPatronRepository_GetPatronProfile(t *testing.T) {
 	repo := adapters.NewPostgresPatronRepository(db)
 	dbPatron := addExamplePatron(t, db)
 	dbBook1 := addExampleAvailableBook(t, db)
-	holdDuration, err := domain.NewHoldDuration(time.Now(), 5)
+	holdDuration, err := patron.NewHoldDuration(time.Now(), 5)
 	require.NoError(t, err)
 
-	err = repo.UpdateWithBook(ctx, domain.PatronID(dbPatron.ID), domain.BookID(dbBook1.ID), func(ctx context.Context, patron *domain.Patron, book *domain.Book) error {
-		err = patron.PlaceOnHold(book.BookInfo(), holdDuration)
+	err = repo.UpdateWithBook(ctx, uuid.MustParse(dbPatron.ID), uuid.MustParse(dbBook1.ID), func(ctx context.Context, aPatron *patron.Patron, aBook *book.Book) error {
+		err = aPatron.PlaceOnHold(aBook.BookInfo(), holdDuration)
 		require.NoError(t, err)
 
-		err = book.HoldBy(patron.ID(), holdDuration)
+		err = aBook.HoldBy(aPatron.ID(), holdDuration.Till())
 		require.NoError(t, err)
 
 		return nil
 	})
 
 	expectedQueryPatronProfile := query.PatronProfile{
-		PatronID:   dbPatron.ID,
-		PatronType: domain.PatronTypeRegular,
-		Holds: []domain.Hold{
+		PatronID:   uuid.MustParse(dbPatron.ID),
+		PatronType: patron.TypeRegular,
+		Holds: []patron.Hold{
 			{
-				BookID:       domain.BookID(dbBook1.ID),
-				PlacedAt:     domain.LibraryBranchID(dbBook1.LibraryBranchID),
+				BookID:       uuid.MustParse(dbBook1.ID),
+				PlacedAt:     uuid.MustParse(dbBook1.LibraryBranchID),
 				HoldDuration: holdDuration,
 			},
 		},
@@ -150,17 +151,17 @@ func TestPostgresPatronRepository_GetPatronProfile(t *testing.T) {
 	}
 	require.NoError(t, err)
 
-	actual, err := repo.GetPatronProfile(ctx, domain.PatronID(dbPatron.ID))
+	actual, err := repo.GetPatronProfile(ctx, uuid.MustParse(dbPatron.ID))
 	require.NoError(t, err)
 
 	cmpOpts := []cmp.Option{
 		cmp.AllowUnexported(
 			time.Time{},
-			domain.PatronType{},
-			domain.Patron{},
-			domain.Hold{},
-			domain.HoldDuration{},
-			domain.Book{},
+			patron.Type{},
+			patron.Patron{},
+			patron.Hold{},
+			patron.HoldDuration{},
+			book.Book{},
 		),
 	}
 

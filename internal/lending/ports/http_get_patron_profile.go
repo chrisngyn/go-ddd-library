@@ -3,13 +3,15 @@ package ports
 import (
 	"net/http"
 
+	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
+
 	"github.com/chiennguyen196/go-library/internal/common/server/httperr"
 	"github.com/chiennguyen196/go-library/internal/lending/app/query"
-	"github.com/chiennguyen196/go-library/internal/lending/domain"
+	"github.com/chiennguyen196/go-library/internal/lending/domain/patron"
 )
 
-func (h HttpServer) GetPatronProfile(w http.ResponseWriter, r *http.Request, patronId string) {
-	q := query.PatronProfileQuery{PatronID: domain.PatronID(patronId)}
+func (h HttpServer) GetPatronProfile(w http.ResponseWriter, r *http.Request, patronId openapi_types.UUID) {
+	q := query.PatronProfileQuery{PatronID: patronId}
 
 	profile, err := h.app.Queries.PatronProfile.Handle(r.Context(), q)
 	if err != nil {
@@ -31,24 +33,24 @@ func toResponsePatronProfile(profile query.PatronProfile) PatronProfile {
 	}
 }
 
-func toResponsePatronType(t domain.PatronType) PatronType {
+func toResponsePatronType(t patron.Type) PatronType {
 	switch t {
-	case domain.PatronTypeRegular:
+	case patron.TypeRegular:
 		return Regular
-	case domain.PatronTypeResearcher:
+	case patron.TypeResearcher:
 		return Researcher
 	default:
 		return ""
 	}
 }
 
-func toResponseHolds(holds []domain.Hold) []Hold {
+func toResponseHolds(holds []patron.Hold) []Hold {
 	result := make([]Hold, 0, len(holds))
 	for _, h := range holds {
 		result = append(result, Hold{
-			BookId:          string(h.BookID),
+			BookId:          h.BookID,
 			From:            h.HoldDuration.From(),
-			LibraryBranchId: string(h.PlacedAt),
+			LibraryBranchId: h.PlacedAt,
 			Till:            h.HoldDuration.Till(),
 			IsOpenEnded:     h.HoldDuration.IsOpenEnded(),
 		})
@@ -72,7 +74,7 @@ func toResponseOverdueCheckouts(overdueCheckouts []query.OverdueCheckout) []Over
 	result := make([]OverdueCheckout, 0, len(overdueCheckouts))
 	for _, c := range overdueCheckouts {
 		result = append(result, OverdueCheckout{
-			BookId:          string(c.BookID),
+			BookId:          c.BookID,
 			LibraryBranchId: c.LibraryBranchID,
 		})
 	}

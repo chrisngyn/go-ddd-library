@@ -3,7 +3,11 @@ package domain
 import (
 	"context"
 
+	"github.com/google/uuid"
+
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
+	"github.com/chiennguyen196/go-library/internal/lending/domain/book"
+	"github.com/chiennguyen196/go-library/internal/lending/domain/patron"
 )
 
 var (
@@ -14,28 +18,28 @@ var (
 type PatronRepository interface {
 	Update(
 		ctx context.Context,
-		patronID PatronID,
-		updateFn func(ctx context.Context, patron *Patron) error,
+		patronID uuid.UUID,
+		updateFn func(ctx context.Context, patron *patron.Patron) error,
 	) error
 	UpdateWithBook(
 		ctx context.Context,
-		patronID PatronID,
-		bookID BookID,
-		updateFn func(ctx context.Context, patron *Patron, book *Book) error,
+		patronID uuid.UUID,
+		bookID uuid.UUID,
+		updateFn func(ctx context.Context, patron *patron.Patron, book *book.Book) error,
 	) error
 }
 
 type BookRepository interface {
-	CreateAvailableBook(ctx context.Context, book BookInformation) error
+	CreateAvailableBook(ctx context.Context, book book.Information) error
 	Update(
 		ctx context.Context,
-		bookID BookID,
-		updateFn func(ctx context.Context, book *Book) error,
+		bookID uuid.UUID,
+		updateFn func(ctx context.Context, book *book.Book) error,
 	) error
 
 	UpdateWithPatron(
 		ctx context.Context,
-		bookID BookID,
-		updateFn func(ctx context.Context, book *Book, patron *Patron) error,
+		bookID uuid.UUID,
+		updateFn func(ctx context.Context, book *book.Book, patron *patron.Patron) error,
 	) error
 }

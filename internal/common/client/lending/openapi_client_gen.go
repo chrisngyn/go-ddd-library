@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
+	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 )
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -90,28 +91,28 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 // The interface specification for the client above.
 type ClientInterface interface {
 	// ReturnBook request
-	ReturnBook(ctx context.Context, bookId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ReturnBook(ctx context.Context, bookId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// Checkout request with any body
-	CheckoutWithBody(ctx context.Context, patronId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CheckoutWithBody(ctx context.Context, patronId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	Checkout(ctx context.Context, patronId string, body CheckoutJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	Checkout(ctx context.Context, patronId openapi_types.UUID, body CheckoutJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CancelHold request with any body
-	CancelHoldWithBody(ctx context.Context, patronId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CancelHoldWithBody(ctx context.Context, patronId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CancelHold(ctx context.Context, patronId string, body CancelHoldJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CancelHold(ctx context.Context, patronId openapi_types.UUID, body CancelHoldJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PlaceHold request with any body
-	PlaceHoldWithBody(ctx context.Context, patronId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PlaceHoldWithBody(ctx context.Context, patronId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PlaceHold(ctx context.Context, patronId string, body PlaceHoldJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PlaceHold(ctx context.Context, patronId openapi_types.UUID, body PlaceHoldJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetPatronProfile request
-	GetPatronProfile(ctx context.Context, patronId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetPatronProfile(ctx context.Context, patronId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
-func (c *Client) ReturnBook(ctx context.Context, bookId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) ReturnBook(ctx context.Context, bookId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewReturnBookRequest(c.Server, bookId)
 	if err != nil {
 		return nil, err
@@ -123,7 +124,7 @@ func (c *Client) ReturnBook(ctx context.Context, bookId string, reqEditors ...Re
 	return c.Client.Do(req)
 }
 
-func (c *Client) CheckoutWithBody(ctx context.Context, patronId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) CheckoutWithBody(ctx context.Context, patronId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCheckoutRequestWithBody(c.Server, patronId, contentType, body)
 	if err != nil {
 		return nil, err
@@ -135,7 +136,7 @@ func (c *Client) CheckoutWithBody(ctx context.Context, patronId string, contentT
 	return c.Client.Do(req)
 }
 
-func (c *Client) Checkout(ctx context.Context, patronId string, body CheckoutJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) Checkout(ctx context.Context, patronId openapi_types.UUID, body CheckoutJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCheckoutRequest(c.Server, patronId, body)
 	if err != nil {
 		return nil, err
@@ -147,7 +148,7 @@ func (c *Client) Checkout(ctx context.Context, patronId string, body CheckoutJSO
 	return c.Client.Do(req)
 }
 
-func (c *Client) CancelHoldWithBody(ctx context.Context, patronId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) CancelHoldWithBody(ctx context.Context, patronId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCancelHoldRequestWithBody(c.Server, patronId, contentType, body)
 	if err != nil {
 		return nil, err
@@ -159,7 +160,7 @@ func (c *Client) CancelHoldWithBody(ctx context.Context, patronId string, conten
 	return c.Client.Do(req)
 }
 
-func (c *Client) CancelHold(ctx context.Context, patronId string, body CancelHoldJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) CancelHold(ctx context.Context, patronId openapi_types.UUID, body CancelHoldJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCancelHoldRequest(c.Server, patronId, body)
 	if err != nil {
 		return nil, err
@@ -171,7 +172,7 @@ func (c *Client) CancelHold(ctx context.Context, patronId string, body CancelHol
 	return c.Client.Do(req)
 }
 
-func (c *Client) PlaceHoldWithBody(ctx context.Context, patronId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PlaceHoldWithBody(ctx context.Context, patronId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPlaceHoldRequestWithBody(c.Server, patronId, contentType, body)
 	if err != nil {
 		return nil, err
@@ -183,7 +184,7 @@ func (c *Client) PlaceHoldWithBody(ctx context.Context, patronId string, content
 	return c.Client.Do(req)
 }
 
-func (c *Client) PlaceHold(ctx context.Context, patronId string, body PlaceHoldJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PlaceHold(ctx context.Context, patronId openapi_types.UUID, body PlaceHoldJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPlaceHoldRequest(c.Server, patronId, body)
 	if err != nil {
 		return nil, err
@@ -195,7 +196,7 @@ func (c *Client) PlaceHold(ctx context.Context, patronId string, body PlaceHoldJ
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetPatronProfile(ctx context.Context, patronId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetPatronProfile(ctx context.Context, patronId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetPatronProfileRequest(c.Server, patronId)
 	if err != nil {
 		return nil, err
@@ -208,7 +209,7 @@ func (c *Client) GetPatronProfile(ctx context.Context, patronId string, reqEdito
 }
 
 // NewReturnBookRequest generates requests for ReturnBook
-func NewReturnBookRequest(server string, bookId string) (*http.Request, error) {
+func NewReturnBookRequest(server string, bookId openapi_types.UUID) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -242,7 +243,7 @@ func NewReturnBookRequest(server string, bookId string) (*http.Request, error) {
 }
 
 // NewCheckoutRequest calls the generic Checkout builder with application/json body
-func NewCheckoutRequest(server string, patronId string, body CheckoutJSONRequestBody) (*http.Request, error) {
+func NewCheckoutRequest(server string, patronId openapi_types.UUID, body CheckoutJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -253,7 +254,7 @@ func NewCheckoutRequest(server string, patronId string, body CheckoutJSONRequest
 }
 
 // NewCheckoutRequestWithBody generates requests for Checkout with any type of body
-func NewCheckoutRequestWithBody(server string, patronId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewCheckoutRequestWithBody(server string, patronId openapi_types.UUID, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -289,7 +290,7 @@ func NewCheckoutRequestWithBody(server string, patronId string, contentType stri
 }
 
 // NewCancelHoldRequest calls the generic CancelHold builder with application/json body
-func NewCancelHoldRequest(server string, patronId string, body CancelHoldJSONRequestBody) (*http.Request, error) {
+func NewCancelHoldRequest(server string, patronId openapi_types.UUID, body CancelHoldJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -300,7 +301,7 @@ func NewCancelHoldRequest(server string, patronId string, body CancelHoldJSONReq
 }
 
 // NewCancelHoldRequestWithBody generates requests for CancelHold with any type of body
-func NewCancelHoldRequestWithBody(server string, patronId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewCancelHoldRequestWithBody(server string, patronId openapi_types.UUID, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -336,7 +337,7 @@ func NewCancelHoldRequestWithBody(server string, patronId string, contentType st
 }
 
 // NewPlaceHoldRequest calls the generic PlaceHold builder with application/json body
-func NewPlaceHoldRequest(server string, patronId string, body PlaceHoldJSONRequestBody) (*http.Request, error) {
+func NewPlaceHoldRequest(server string, patronId openapi_types.UUID, body PlaceHoldJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -347,7 +348,7 @@ func NewPlaceHoldRequest(server string, patronId string, body PlaceHoldJSONReque
 }
 
 // NewPlaceHoldRequestWithBody generates requests for PlaceHold with any type of body
-func NewPlaceHoldRequestWithBody(server string, patronId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewPlaceHoldRequestWithBody(server string, patronId openapi_types.UUID, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -383,7 +384,7 @@ func NewPlaceHoldRequestWithBody(server string, patronId string, contentType str
 }
 
 // NewGetPatronProfileRequest generates requests for GetPatronProfile
-func NewGetPatronProfileRequest(server string, patronId string) (*http.Request, error) {
+func NewGetPatronProfileRequest(server string, patronId openapi_types.UUID) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -460,25 +461,25 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 	// ReturnBook request
-	ReturnBookWithResponse(ctx context.Context, bookId string, reqEditors ...RequestEditorFn) (*ReturnBookResponse, error)
+	ReturnBookWithResponse(ctx context.Context, bookId openapi_types.UUID, reqEditors ...RequestEditorFn) (*ReturnBookResponse, error)
 
 	// Checkout request with any body
-	CheckoutWithBodyWithResponse(ctx context.Context, patronId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CheckoutResponse, error)
+	CheckoutWithBodyWithResponse(ctx context.Context, patronId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CheckoutResponse, error)
 
-	CheckoutWithResponse(ctx context.Context, patronId string, body CheckoutJSONRequestBody, reqEditors ...RequestEditorFn) (*CheckoutResponse, error)
+	CheckoutWithResponse(ctx context.Context, patronId openapi_types.UUID, body CheckoutJSONRequestBody, reqEditors ...RequestEditorFn) (*CheckoutResponse, error)
 
 	// CancelHold request with any body
-	CancelHoldWithBodyWithResponse(ctx context.Context, patronId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CancelHoldResponse, error)
+	CancelHoldWithBodyWithResponse(ctx context.Context, patronId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CancelHoldResponse, error)
 
-	CancelHoldWithResponse(ctx context.Context, patronId string, body CancelHoldJSONRequestBody, reqEditors ...RequestEditorFn) (*CancelHoldResponse, error)
+	CancelHoldWithResponse(ctx context.Context, patronId openapi_types.UUID, body CancelHoldJSONRequestBody, reqEditors ...RequestEditorFn) (*CancelHoldResponse, error)
 
 	// PlaceHold request with any body
-	PlaceHoldWithBodyWithResponse(ctx context.Context, patronId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PlaceHoldResponse, error)
+	PlaceHoldWithBodyWithResponse(ctx context.Context, patronId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PlaceHoldResponse, error)
 
-	PlaceHoldWithResponse(ctx context.Context, patronId string, body PlaceHoldJSONRequestBody, reqEditors ...RequestEditorFn) (*PlaceHoldResponse, error)
+	PlaceHoldWithResponse(ctx context.Context, patronId openapi_types.UUID, body PlaceHoldJSONRequestBody, reqEditors ...RequestEditorFn) (*PlaceHoldResponse, error)
 
 	// GetPatronProfile request
-	GetPatronProfileWithResponse(ctx context.Context, patronId string, reqEditors ...RequestEditorFn) (*GetPatronProfileResponse, error)
+	GetPatronProfileWithResponse(ctx context.Context, patronId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetPatronProfileResponse, error)
 }
 
 type ReturnBookResponse struct {
@@ -598,7 +599,7 @@ func (r GetPatronProfileResponse) StatusCode() int {
 }
 
 // ReturnBookWithResponse request returning *ReturnBookResponse
-func (c *ClientWithResponses) ReturnBookWithResponse(ctx context.Context, bookId string, reqEditors ...RequestEditorFn) (*ReturnBookResponse, error) {
+func (c *ClientWithResponses) ReturnBookWithResponse(ctx context.Context, bookId openapi_types.UUID, reqEditors ...RequestEditorFn) (*ReturnBookResponse, error) {
 	rsp, err := c.ReturnBook(ctx, bookId, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -607,7 +608,7 @@ func (c *ClientWithResponses) ReturnBookWithResponse(ctx context.Context, bookId
 }
 
 // CheckoutWithBodyWithResponse request with arbitrary body returning *CheckoutResponse
-func (c *ClientWithResponses) CheckoutWithBodyWithResponse(ctx context.Context, patronId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CheckoutResponse, error) {
+func (c *ClientWithResponses) CheckoutWithBodyWithResponse(ctx context.Context, patronId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CheckoutResponse, error) {
 	rsp, err := c.CheckoutWithBody(ctx, patronId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -615,7 +616,7 @@ func (c *ClientWithResponses) CheckoutWithBodyWithResponse(ctx context.Context, 
 	return ParseCheckoutResponse(rsp)
 }
 
-func (c *ClientWithResponses) CheckoutWithResponse(ctx context.Context, patronId string, body CheckoutJSONRequestBody, reqEditors ...RequestEditorFn) (*CheckoutResponse, error) {
+func (c *ClientWithResponses) CheckoutWithResponse(ctx context.Context, patronId openapi_types.UUID, body CheckoutJSONRequestBody, reqEditors ...RequestEditorFn) (*CheckoutResponse, error) {
 	rsp, err := c.Checkout(ctx, patronId, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -624,7 +625,7 @@ func (c *ClientWithResponses) CheckoutWithResponse(ctx context.Context, patronId
 }
 
 // CancelHoldWithBodyWithResponse request with arbitrary body returning *CancelHoldResponse
-func (c *ClientWithResponses) CancelHoldWithBodyWithResponse(ctx context.Context, patronId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CancelHoldResponse, error) {
+func (c *ClientWithResponses) CancelHoldWithBodyWithResponse(ctx context.Context, patronId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CancelHoldResponse, error) {
 	rsp, err := c.CancelHoldWithBody(ctx, patronId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -632,7 +633,7 @@ func (c *ClientWithResponses) CancelHoldWithBodyWithResponse(ctx context.Context
 	return ParseCancelHoldResponse(rsp)
 }
 
-func (c *ClientWithResponses) CancelHoldWithResponse(ctx context.Context, patronId string, body CancelHoldJSONRequestBody, reqEditors ...RequestEditorFn) (*CancelHoldResponse, error) {
+func (c *ClientWithResponses) CancelHoldWithResponse(ctx context.Context, patronId openapi_types.UUID, body CancelHoldJSONRequestBody, reqEditors ...RequestEditorFn) (*CancelHoldResponse, error) {
 	rsp, err := c.CancelHold(ctx, patronId, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -641,7 +642,7 @@ func (c *ClientWithResponses) CancelHoldWithResponse(ctx context.Context, patron
 }
 
 // PlaceHoldWithBodyWithResponse request with arbitrary body returning *PlaceHoldResponse
-func (c *ClientWithResponses) PlaceHoldWithBodyWithResponse(ctx context.Context, patronId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PlaceHoldResponse, error) {
+func (c *ClientWithResponses) PlaceHoldWithBodyWithResponse(ctx context.Context, patronId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PlaceHoldResponse, error) {
 	rsp, err := c.PlaceHoldWithBody(ctx, patronId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -649,7 +650,7 @@ func (c *ClientWithResponses) PlaceHoldWithBodyWithResponse(ctx context.Context,
 	return ParsePlaceHoldResponse(rsp)
 }
 
-func (c *ClientWithResponses) PlaceHoldWithResponse(ctx context.Context, patronId string, body PlaceHoldJSONRequestBody, reqEditors ...RequestEditorFn) (*PlaceHoldResponse, error) {
+func (c *ClientWithResponses) PlaceHoldWithResponse(ctx context.Context, patronId openapi_types.UUID, body PlaceHoldJSONRequestBody, reqEditors ...RequestEditorFn) (*PlaceHoldResponse, error) {
 	rsp, err := c.PlaceHold(ctx, patronId, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -658,7 +659,7 @@ func (c *ClientWithResponses) PlaceHoldWithResponse(ctx context.Context, patronI
 }
 
 // GetPatronProfileWithResponse request returning *GetPatronProfileResponse
-func (c *ClientWithResponses) GetPatronProfileWithResponse(ctx context.Context, patronId string, reqEditors ...RequestEditorFn) (*GetPatronProfileResponse, error) {
+func (c *ClientWithResponses) GetPatronProfileWithResponse(ctx context.Context, patronId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetPatronProfileResponse, error) {
 	rsp, err := c.GetPatronProfile(ctx, patronId, reqEditors...)
 	if err != nil {
 		return nil, err

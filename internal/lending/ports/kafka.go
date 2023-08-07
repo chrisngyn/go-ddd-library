@@ -11,13 +11,14 @@ import (
 	"github.com/ThreeDotsLabs/watermill-kafka/v2/pkg/kafka"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/alexdrl/zerowater"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
 	"github.com/chiennguyen196/go-library/internal/lending/app"
 	"github.com/chiennguyen196/go-library/internal/lending/app/command"
-	"github.com/chiennguyen196/go-library/internal/lending/domain"
+	"github.com/chiennguyen196/go-library/internal/lending/domain/book"
 )
 
 type KafkaConsumer struct {
@@ -130,32 +131,32 @@ func getEventType(msg *message.Message) string {
 
 type BookInstanceAdded struct {
 	ISBN            string    `json:"isbn"`
-	BookID          string    `json:"bookID"`
+	BookID          uuid.UUID `json:"bookID"`
 	BookType        string    `json:"bookType"`
-	LibraryBranchID string    `json:"libraryBranchID"`
+	LibraryBranchID uuid.UUID `json:"libraryBranchID"`
 	When            time.Time `json:"when"`
 }
 
-func toAddNewBookCommand(bookID, bookType, libraryBranchID string) (command.AddNewBookCommand, error) {
+func toAddNewBookCommand(bookID uuid.UUID, bookType string, libraryBranchID uuid.UUID) (command.AddNewBookCommand, error) {
 	domainBookType, err := toDomainBookType(bookType)
 	if err != nil {
 		return command.AddNewBookCommand{}, err
 	}
 	return command.AddNewBookCommand{
-		BookID:          domain.BookID(bookID),
+		BookID:          bookID,
 		BookType:        domainBookType,
-		LibraryBranchID: domain.LibraryBranchID(libraryBranchID),
+		LibraryBranchID: libraryBranchID,
 	}, nil
 }
 
-func toDomainBookType(bookType string) (domain.BookType, error) {
+func toDomainBookType(bookType string) (book.Type, error) {
 	switch bookType {
 	case "Restricted":
-		return domain.BookTypeRestricted, nil
+		return book.TypeRestricted, nil
 	case "Circulating":
-		return domain.BookTypeCirculating, nil
+		return book.TypeCirculating, nil
 	default:
-		return domain.BookType{}, commonErrors.NewIncorrectInputError("invalid-book-type", "invalid book type")
+		return book.Type{}, commonErrors.NewIncorrectInputError("invalid-book-type", "invalid book type")
 	}
 }
 

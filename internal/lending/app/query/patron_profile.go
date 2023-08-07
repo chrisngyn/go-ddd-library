@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	commonErrors "github.com/chiennguyen196/go-library/internal/common/errors"
 	"github.com/chiennguyen196/go-library/internal/common/monitoring"
-	"github.com/chiennguyen196/go-library/internal/lending/domain"
 )
 
 type PatronProfileHandler struct {
@@ -23,7 +23,7 @@ func NewPatronProfileHandler(readModel PatronProfileReadModel) PatronProfileHand
 }
 
 type PatronProfileReadModel interface {
-	GetPatronProfile(ctx context.Context, patronID domain.PatronID) (PatronProfile, error)
+	GetPatronProfile(ctx context.Context, patronID uuid.UUID) (PatronProfile, error)
 }
 
 func (h PatronProfileHandler) Handle(ctx context.Context, query PatronProfileQuery) (p PatronProfile, err error) {
@@ -39,11 +39,11 @@ func (h PatronProfileHandler) Handle(ctx context.Context, query PatronProfileQue
 }
 
 type PatronProfileQuery struct {
-	PatronID domain.PatronID
+	PatronID uuid.UUID
 }
 
 func (q PatronProfileQuery) validate() error {
-	if q.PatronID.IsZero() {
+	if q.PatronID == uuid.Nil {
 		return commonErrors.NewIncorrectInputError("missing-patron-id", "missing patron id")
 	}
 	return nil
